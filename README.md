@@ -2,20 +2,20 @@
 
 ```bash
 $ cd Videoteca/client
-$ docker build --tag=<nome_immagine> .
+$ docker build --tag=<nome-immagine>[:<tag>] .
 
 $ cd ../server
-$ docker build --tag=<nome_immagine> .
+$ docker build --tag=<nome-immagine>[:<tag>] .
 ```
 
 # Creazione rete di container
 
 ```bash
-$ docker network create <nome_rete>
+$ docker network create <nome-rete>
 ```
 
 # Creazione container,connessione alla rete e avvio in modalità interattiva
 
 ```bash
-$ docker run -it --name=<nome_container> --network=<nome_rete> <nome_immagine> /bin/bash
+$ docker run -it --name=<nome-container> --network=<nome-rete> <nome-immagine> /bin/bash
 ```
