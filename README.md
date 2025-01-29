@@ -1,4 +1,4 @@
-# Creazione delle immagini Docker dai rispettivi Dockerfile
+# Creazione delle immagini dai rispettivi Dockerfile
 
 ```bash
 $ cd Videoteca/client
