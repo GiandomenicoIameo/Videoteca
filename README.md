@@ -5,7 +5,7 @@
 $ cd Videoteca/client
 $ docker build --tag=<nome-immagine>[:<tag>] .
 
-$ cd ../server
+$ cd Videoteca/server
 $ docker build --tag=<nome-immagine>[:<tag>] .
 ```
 
