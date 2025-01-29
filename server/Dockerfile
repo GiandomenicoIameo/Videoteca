@@ -14,4 +14,4 @@ COPY . /app
 
 # Compilo il programma server-tcp.c e
 # creo l'eseguibile
-RUN gcc server-tcp.c -o server-tcp.out
+RUN make cc=server-tcp
