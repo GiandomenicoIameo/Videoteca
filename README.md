@@ -15,8 +15,11 @@ $ docker build --tag=<nome-immagine>[:<tag>] .
 $ docker network create <nome-rete>
 ```
 
-## Creazione container,connessione alla rete e avvio in modalità interattiva
+## Avvio di un container  modalità interattiva
 
 ```bash
+# Le opzioni --name e --network consentono, rispettivamente, di
+# assegnare un nome a al container e connettere quest'ultimo
+# a una rete creata precedentemente
 $ docker run -it --name=<nome-container> --network=<nome-rete> <nome-immagine> /bin/bash
 ```
