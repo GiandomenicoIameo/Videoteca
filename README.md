@@ -23,7 +23,7 @@ $ docker network create <nome-rete>
 # a una rete creata precedentemente
 $ docker run -it --name=<nome-container> --network=<nome-rete> <nome-immagine> /bin/bash
 
-# N.B. Il nome del container del client deve corrispondere al valore specificato
+# N.B. Il nome del container del server deve corrispondere al valore specificato
 # nella variabile server_name nel file client-tcp.py
 ```
 
