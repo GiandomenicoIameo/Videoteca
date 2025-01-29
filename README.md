@@ -9,7 +9,7 @@ $ cd Videoteca/server
 $ docker build --tag=<nome-immagine>[:<tag>] .
 ```
 
-## Creazione rete di container
+## Creazione di una rete di container
 
 ```bash
 $ docker network create <nome-rete>
