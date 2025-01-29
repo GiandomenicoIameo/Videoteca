@@ -19,7 +19,7 @@ $ docker network create <nome-rete>
 
 ```bash
 # Le opzioni --name e --network consentono, rispettivamente, di
-# assegnare un nome a al container e connettere quest'ultimo
+# assegnare un nome al container e connettere quest'ultimo
 # a una rete creata precedentemente
 $ docker run -it --name=<nome-container> --network=<nome-rete> <nome-immagine> /bin/bash
 ```
