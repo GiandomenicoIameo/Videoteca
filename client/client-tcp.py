@@ -3,7 +3,7 @@ from socket import *
 
 #print( tk.__version__ )
 
-server_name = 'localhost'
+server_name = 'cclient'
 server_port = 8080
 
 client_socket = socket( AF_INET, SOCK_STREAM )
