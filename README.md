@@ -30,7 +30,7 @@ $ docker run -it --name=<nome-container> --network=<nome-rete> <nome-immagine> /
 ## Demo
 ```bash
 # Una volta avviato il container del client, tramite una
-sessione di terminale, è sufficiente digitare:
+# sessione di terminale, è sufficiente digitare:
 $ ./server-tcp.out
 Server in ascolto sulla porta 8080...
 
