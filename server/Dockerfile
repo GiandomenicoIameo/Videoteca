@@ -1,17 +1,15 @@
 FROM gcc:latest
 
-# Attraverso il seguente comando creo la directory
-# di lavoro e la chiamo app.
-# Tale directory è una sottodirectory della
-# directory root ( / ) nel file system del
-# container.
+# Utilizzando il seguente comando, viene creata la directory 
+# di lavoro denominata app, che è una sottodirectory della 
+# directory root (/) nel file system del container.
 WORKDIR /app
 
-# Mediante il seguente comando copio il
+# Mediante il seguente comando viene copiato il
 # contenuto della directory corrente nella
 # directory di lavoro del container: /app
 COPY . /app
 
-# Compilo il programma server-tcp.c e
-# creo l'eseguibile
+# Compilazione del programma server-tcp.c e
+# creazione dell'eseguibile
 RUN make cc=server-tcp
