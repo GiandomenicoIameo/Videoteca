@@ -57,7 +57,7 @@ int main( void ) {
 
         sdb = dup( sda );
         pthread_create( &tid, NULL, runner, &sdb );
-        close( sdb );
+        close( sda );
     }
 
     return 0;
