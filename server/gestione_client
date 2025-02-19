@@ -1,0 +1,30 @@
+char buffer[ 1024 ] = { '\0' };
+char message_response[ 1024 ] = { '\0' };
+
+if( read( sdb, buffer, sizeof( buffer ) - 1 ) < 0 ) {
+    perror( "Errore ricevuto dalla primitiva read" );
+    pthread_exit( ( void * )1 );
+}
+
+printf( "%s%s\n", "Messaggio ricevuto dal client: ", buffer );
+strcpy( message_response, "200 OK" );
+
+if( send( sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
+    perror( "Errore ricevuto dalla primitiva send" );
+    pthread_exit( ( void * )1 );
+}
+
+puts( "Messaggio di risposta inviato!" );
+
+
+
+send_message = input( 'Componi messaggio: ' )
+client_socket.send( send_message.encode() )
+
+print( 'Messaggio inviato!' )
+
+receive_message = client_socket.recv( 1024 )
+print( 'Messaggio ricevuto dal server:', receive_message.decode() )
+
+client_socket.close()
+print( 'Connessione terminata' )

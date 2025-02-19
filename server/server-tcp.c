@@ -8,20 +8,23 @@
 #include <unistd.h>     // Qui sono definite le primitive read e close
 
 #include <string.h>
+#include <pthread.h>
 
 #define domain sin_family
 #define port sin_port
 #define ip sin_addr.s_addr
 
+void *runner( void *sd );
+
 int main( void ) {
 
     struct sockaddr_in client, server;
-    int address, sda, sdb;
-    char buffer[ 1024 ] = { '\0' }, message_response[ 1024 ] = { '\0' };
+    int address, listener, sda, sdb;
+    pthread_t tid;
 
-    sda = socket( AF_INET, SOCK_STREAM, 0 );
+    listener = socket( AF_INET, SOCK_STREAM, 0 );
 
-    if( sda < 0 ) {
+    if( listener < 0 ) {
         perror( "creazione della socket fallita" );
         exit( 1 );
     }
@@ -33,46 +36,39 @@ int main( void ) {
     server.port = htons( 8080 );
     server.ip = htonl( INADDR_ANY );
 
-    if( bind( sda, ( const struct sockaddr * )&server , sizeof( server ) ) < 0 ) {
+    if( bind( listener, ( const struct sockaddr * )&server , sizeof( server ) ) < 0 ) {
         perror( "Errore ricevuto dalla primitiva bind" );
         exit( 1 );
     }
 
-    if( listen( sda, 3 ) < 0 ) {
+    if( listen( listener, 3 ) < 0 ) {
         perror( "Errore ricevuto dalla primitiva listen" );
         exit( 1 );
     }
 
-    puts( "Server in ascolto sulla porta 8080..." );
-    address = sizeof( client );
+    while( 1 ) {
+        puts( "Server in ascolto sulla porta 8080..." );
+        address = sizeof( client );
 
-    if( ( sdb = accept( sda, ( struct sockaddr * )&client, ( socklen_t *)&address ) ) < 0 ) {
-        perror( "Errore ricevuto dalla primitiva accept" );
-        exit( 1 );
+        if( ( sda = accept( listener, ( struct sockaddr * )&client, ( socklen_t *)&address ) ) < 0 ) {
+            perror( "Errore ricevuto dalla primitiva accept" );
+            exit( 1 );
+        }
+
+        sdb = dup( sda );
+        pthread_create( &tid, NULL, runner, &sdb );
+        close( sdb );
     }
-
-    if( read( sdb, buffer, sizeof( buffer ) - 1 ) < 0 ) {
-        perror( "Errore ricevuto dalla primitiva read" );
-        exit( 1 );
-    }
-
-    printf( "%s%s\n", "Messaggio ricevuto dal client: ", buffer );
-    strcpy( message_response, "200 OK" );
-
-    if( send( sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
-        perror( "Errore ricevuto dalla primitiva send" );
-        exit( 1 );
-    }
-
-    puts( "Messaggio di risposta inviato!" );
-
-    close( sdb );
-    close( sda );
-
-    puts( "Connessione terminata" );
 
     return 0;
 }
 
+void *runner( void *sd ) {
 
+    int sdb = dup( *( int * )sd );
 
+    /* Gestione client */
+
+    close( sdb );
+    pthread_exit( 0 );
+}
