@@ -21,7 +21,7 @@ int lock = 1; // Variabile condivisa che assume la funzione di lucchetto
 sem_t semaphore;
 int sum = 0;
 
-void *runner( void *sd );
+void *runner( void *sda );
 void wait( int *lock );
 void signal( int *lock );
 
@@ -76,9 +76,9 @@ int main( void ) {
     return 0;
 }
 
-void *runner( void *sd ) {
+void *runner( void *sda ) {
 
-    int sdb = dup( *( int * )sd );
+    int sdb = dup( *( int * )sda );
     signal( &lock ); // Il thread figlio sblocca il lucchetto e permette al thread
                      // padre di utilizzare sda per la creazione di una nuova socket
 
