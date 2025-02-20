@@ -64,7 +64,7 @@ int main( void ) {
 
         wait( &lock ); // Il thread padre esegue la primitiva accept solo dopo che il
                        // il thread figlio ha eseguito signal( &lock ): dopo che ha
-                       // duplicato il descrittore di file
+                       // duplicato il descrittore di file sda
 
         if( ( sda = accept( listener, ( struct sockaddr * )&client, ( socklen_t *)&address ) ) < 0 ) {
             perror( "Errore ricevuto dalla primitiva accept" );
