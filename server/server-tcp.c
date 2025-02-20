@@ -9,17 +9,24 @@
 
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #define domain sin_family
 #define port sin_port
 #define ip sin_addr.s_addr
 
+int lock = 1; // Variabile condivisa che assume la funzione di lucchetto
+              // per l'accesso alla risorsa condivisa sda ( descrittore di file ).
+int sum = 0;
+
 void *runner( void *sd );
+void wait( int *lock );
+void signal( int *lock );
 
 int main( void ) {
 
     struct sockaddr_in client, server;
-    int address, listener, sda, sdb;
+    int address, listener, sda;
     pthread_t tid;
 
     listener = socket( AF_INET, SOCK_STREAM, 0 );
@@ -47,17 +54,19 @@ int main( void ) {
     }
 
     while( 1 ) {
+
         puts( "Server in ascolto sulla porta 8080..." );
         address = sizeof( client );
+
+        wait( &lock ); // Il thread padre esegue la primitiva accept solo dopo che il
+                       // il thread figlio ha eseguito signal( &lock ): dopo che ha
+                       // duplicato il descrittore di file
 
         if( ( sda = accept( listener, ( struct sockaddr * )&client, ( socklen_t *)&address ) ) < 0 ) {
             perror( "Errore ricevuto dalla primitiva accept" );
             exit( 1 );
         }
-
-        sdb = dup( sda );
-        pthread_create( &tid, NULL, runner, &sdb );
-        close( sda );
+        pthread_create( &tid, NULL, runner, &sda );
     }
 
     return 0;
@@ -66,9 +75,22 @@ int main( void ) {
 void *runner( void *sd ) {
 
     int sdb = dup( *( int * )sd );
+    signal( &lock ); // Il thread figlio sblocca il lucchetto e permette al thread
+                     // padre di utilizzare sda per la creazione di una nuova socket
 
     /* Gestione client */
 
     close( sdb );
+
+    puts( "Connessione terminata" );
     pthread_exit( 0 );
+}
+
+void wait( int *lock ) {
+    while( !( *lock ) );
+    *lock = *lock - 1;
+}
+
+void signal( int *lock ) {
+    *lock = *lock + 1;
 }
