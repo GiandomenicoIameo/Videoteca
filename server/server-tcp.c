@@ -17,6 +17,8 @@
 
 int lock = 1; // Variabile condivisa che assume la funzione di lucchetto
               // per l'accesso alla risorsa condivisa sda ( descrittore di file ).
+
+sem_t semaphore;
 int sum = 0;
 
 void *runner( void *sd );
@@ -53,6 +55,8 @@ int main( void ) {
         exit( 1 );
     }
 
+    sem_init( &semaphore, 0, 1 );
+
     while( 1 ) {
 
         puts( "Server in ascolto sulla porta 8080..." );
@@ -78,8 +82,13 @@ void *runner( void *sd ) {
     signal( &lock ); // Il thread figlio sblocca il lucchetto e permette al thread
                      // padre di utilizzare sda per la creazione di una nuova socket
 
-    /* Gestione client */
+    sem_wait( &semaphore );
+    /* Sezione d'ingresso */
+    sum = sum + 1;  /* Sezione critica */
+    /* Sezione di uscita */
+    sem_post( &semaphore );
 
+    printf( "%d\n", sum );
     close( sdb );
 
     puts( "Connessione terminata" );
