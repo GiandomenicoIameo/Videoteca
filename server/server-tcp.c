@@ -29,7 +29,7 @@ int request( int type, int action );
 void response( int valid , int *sdb );
 void split( char *buffer, int *type, int *action );
 
-enum Type { RELEASE, ACCESS };
+enum TypeRequest { RELEASE, ACCESS };
 enum SessionAction { LOGOUT, CANCEL };
 enum AuthAction { LOGIN, SIGNUP };
 
