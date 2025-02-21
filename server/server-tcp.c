@@ -25,6 +25,14 @@ void *runner( void *sda );
 void wait( int *lock );
 void signal( int *lock );
 
+int request( int type, int action );
+void response( int valid , int *sdb );
+void split( char *buffer, int *type, int *action );
+
+enum Type { RELEASE, ACCESS };
+enum SessionAction { LOGOUT, CANCEL };
+enum AuthAction { LOGIN, SIGUP };
+
 int main( void ) {
 
     struct sockaddr_in client, server;
@@ -82,13 +90,26 @@ void *runner( void *sda ) {
     signal( &lock ); // Il thread figlio sblocca il lucchetto e permette al thread
                      // padre di utilizzare sda per la creazione di una nuova socket
 
+    char buffer[ 1024 ] = { '\0' };
+    int type, action;
+
+    if( read( sdb, buffer, sizeof( buffer ) - 1 ) < 0 ) {
+        perror( "Errore ricevuto dalla primitiva read" );
+        pthread_exit( ( void * )1 );
+    }
+
+    split( buffer, &type, &action );
+    response( request( type, action ), &sdb );
+
     sem_wait( &semaphore );
-    /* Sezione d'ingresso */
+     /* Sezione d'ingresso */
     sum = sum + 1;  /* Sezione critica */
-    /* Sezione di uscita */
+     /* Sezione di uscita */
     sem_post( &semaphore );
 
-    printf( "%d\n", sum );
+    printf( "Client: %d\n", sum );
+    printf( "Message: %d%d\n", type, action );
+
     close( sdb );
 
     puts( "Connessione terminata" );
@@ -102,4 +123,60 @@ void wait( int *lock ) {
 
 void signal( int *lock ) {
     *lock = *lock + 1;
+}
+
+int request( int type, int action ) {
+
+    int response;
+
+    switch( type ) {
+        case RELEASE:
+            if( action == LOGOUT || action == CANCEL )
+                response = 1;
+            else
+                response = 0;
+            break;
+        case ACCESS:
+            if( action == LOGIN || action == SIGUP )
+                response = 1;
+            else
+                response = 0;
+            break;
+        default:
+            response = 0;
+            break;
+    }
+
+    return response;
+}
+
+void response( int valid, int *sdb ) {
+
+    char message_response[ 1024 ] = { '\0' };
+
+    if ( valid ) {
+        strcpy( message_response, "200 OK" );
+
+        if( send( *sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
+            perror( "Errore ricevuto dalla primitiva send" );
+            pthread_exit( ( void * )1 );
+        }
+    } else {
+        strcpy( message_response, "400 Bad Request" );
+
+        if( send( *sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
+            perror( "Errore ricevuto dalla primitiva send" );
+            pthread_exit( ( void * )1 );
+        }
+    }
+}
+
+void split( char *buffer, int *type, int *action ) {
+
+    char *remainderPtr;
+    unsigned long int number = strtoul( buffer, &remainderPtr, 10 );
+
+    *action = number % 10;
+    number = number / 10;
+    *type = number % 10;
 }
