@@ -31,7 +31,7 @@ void split( char *buffer, int *type, int *action );
 
 enum Type { RELEASE, ACCESS };
 enum SessionAction { LOGOUT, CANCEL };
-enum AuthAction { LOGIN, SIGUP };
+enum AuthAction { LOGIN, SIGNUP };
 
 int main( void ) {
 
@@ -137,7 +137,7 @@ int request( int type, int action ) {
                 response = 0;
             break;
         case ACCESS:
-            if( action == LOGIN || action == SIGUP )
+            if( action == LOGIN || action == SIGNUP )
                 response = 1;
             else
                 response = 0;
