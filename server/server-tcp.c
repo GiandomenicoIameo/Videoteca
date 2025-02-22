@@ -29,7 +29,6 @@ void signal( int *lock );
 
 int request( char *buffer );
 void response( int valid , int *sdb );
-void deconding( char *buffer );
 char *split( char *buffer, int *type, int *action );
 
 void authentication( char *remainderPtr );
