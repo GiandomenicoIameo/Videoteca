@@ -11,6 +11,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#include <sys/types.h>
+
 #define domain sin_family
 #define port sin_port
 #define ip sin_addr.s_addr
@@ -25,12 +27,16 @@ void *runner( void *sda );
 void wait( int *lock );
 void signal( int *lock );
 
-int request( int type, int action );
+int request( char *buffer );
 void response( int valid , int *sdb );
-void split( char *buffer, int *type, int *action );
+void deconding( char *buffer );
+char *split( char *buffer, int *type, int *action );
 
-enum TypeRequest { RELEASE, ACCESS };
-enum SessionAction { LOGOUT, CANCEL };
+void authentication( char *remainderPtr );
+void search( char *remainderPtr );
+
+enum TypeRequest { RELEASE, AUTHENTICATION, TRANSITION, SEARCH };
+enum ReleaseAction { LOGOUT, CANCEL };
 enum AuthAction { LOGIN, SIGNUP };
 
 int main( void ) {
@@ -89,17 +95,12 @@ void *runner( void *sda ) {
     int sdb = dup( *( int * )sda );
     signal( &lock ); // Il thread figlio sblocca il lucchetto e permette al thread
                      // padre di utilizzare sda per la creazione di una nuova socket
-
     char buffer[ 1024 ] = { '\0' };
-    int type, action;
 
     if( read( sdb, buffer, sizeof( buffer ) - 1 ) < 0 ) {
         perror( "Errore ricevuto dalla primitiva read" );
         pthread_exit( ( void * )1 );
     }
-
-    split( buffer, &type, &action );
-    response( request( type, action ), &sdb );
 
     sem_wait( &semaphore );
      /* Sezione d'ingresso */
@@ -108,8 +109,7 @@ void *runner( void *sda ) {
     sem_post( &semaphore );
 
     printf( "Client: %d\n", sum );
-    printf( "Message: %d%d\n", type, action );
-
+    response( request( buffer ), &sdb );
     close( sdb );
 
     puts( "Connessione terminata" );
@@ -125,25 +125,30 @@ void signal( int *lock ) {
     *lock = *lock + 1;
 }
 
-int request( int type, int action ) {
+int request( char *buffer ) {
 
-    int response;
+    int response, type, action;
+    char *remainderPtr = split( buffer, &type, &action );
+
+    printf( "Tipo di richiesta: %d%d\n", type, action );
 
     switch( type ) {
         case RELEASE:
-            if( action == LOGOUT || action == CANCEL )
-                response = 1;
-            else
-                response = 0;
+            response = 0;
             break;
-        case ACCESS:
-            if( action == LOGIN || action == SIGNUP )
-                response = 1;
-            else
-                response = 0;
+        case AUTHENTICATION:
+            authentication( remainderPtr );
+            response = 1;
+            break;
+        case TRANSITION:
+            response = 2;
+            break;
+        case SEARCH:
+            search( remainderPtr );
+            response = 3;
             break;
         default:
-            response = 0;
+            response = -1;
             break;
     }
 
@@ -154,7 +159,7 @@ void response( int valid, int *sdb ) {
 
     char message_response[ 1024 ] = { '\0' };
 
-    if ( valid ) {
+    if ( valid >= 0 ) {
         strcpy( message_response, "200 OK" );
 
         if( send( *sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
@@ -171,12 +176,51 @@ void response( int valid, int *sdb ) {
     }
 }
 
-void split( char *buffer, int *type, int *action ) {
+char *split( char *buffer, int *type, int *action ) {
 
     char *remainderPtr;
-    unsigned long int number = strtoul( buffer, &remainderPtr, 10 );
+    unsigned long int code = strtoul( buffer, &remainderPtr, 10 );
 
-    *action = number % 10;
-    number = number / 10;
-    *type = number % 10;
+    if ( code < 10 ) {
+        *type = code % 10;
+        *action = 0;
+    }
+    else {
+        *action = code % 10;
+        code = code / 10;
+        *type = code % 10;
+    }
+
+    return remainderPtr;
 }
+
+void authentication( char *remainderPtr ) {
+
+    char username[ 20 ], password[ 20 ];
+    int i;
+
+    for( i = 0; *remainderPtr != ' '; remainderPtr++, i++ )
+        username[ i ] = *remainderPtr;
+    username[ i ] = '\0';
+
+    remainderPtr++;
+    for( i = 0; *remainderPtr != '\0'; remainderPtr++, i++ )
+        password[ i ] = *remainderPtr;
+    password[ i ] = '\0';
+
+    printf( "Username: %s\n", username );
+    printf( "Password: %s\n", password );
+}
+
+void search( char *remainderPtr ) {
+
+    char name[ 40 ];
+    char command[ 100 ];
+
+    strcpy( name, remainderPtr );
+
+    snprintf( command, sizeof( command ), "./search.sh \"%s\"", name );
+    system( command );
+}
+
+
