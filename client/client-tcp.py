@@ -6,8 +6,24 @@ server_port = 8080
 client_socket = socket( AF_INET, SOCK_STREAM )
 client_socket.connect( ( server_name, server_port ) )
 
-send_message = input( 'Componi messaggio: ' )
-client_socket.send( send_message.encode() )
+method = input( 'Inserisci il tipo di richiesta: ' )
+
+head = method
+body = ""
+
+method = int( method )
+
+if method == 3:
+    film = input( 'Nome film: ')
+    body = film
+
+elif method == 1:
+    username = input( 'Username: ' )
+    password = input( 'Password: ')
+    body = username + ' ' + password
+
+message = head + body
+client_socket.send( message.encode() )
 
 print( 'Messaggio inviato!' )
 
