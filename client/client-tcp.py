@@ -7,22 +7,31 @@ client_socket = socket( AF_INET, SOCK_STREAM )
 client_socket.connect( ( server_name, server_port ) )
 
 method = input( 'Inserisci il tipo di richiesta: ' )
-
-head = method
-body = ""
+action = input( 'Inserisci il tipo di azione: ' )
 
 method = int( method )
+action = int( action )
 
-if method == 3:
-    film = input( 'Nome film: ')
-    body = film
+if method == 0:
+    if action == 1:
+        username = input( 'Username: ' )
+        password = input( 'Password: ')
 
+        body = username + ' ' + password
+        message = str( method ) + str( action ) + body
+    else:
+        message = str( method ) + str( action )
 elif method == 1:
-    username = input( 'Username: ' )
-    password = input( 'Password: ')
-    body = username + ' ' + password
+    if action == 0 or action == 1:
+        username = input( 'Username: ' )
+        password = input( 'Password: ')
 
-message = head + body
+        body = username + ' ' + password
+        message = str( method ) + str( action ) + body
+elif method == 3:
+    film = input( 'Nome film: ' )
+    message = str( method ) + str( action ) + film
+
 client_socket.send( message.encode() )
 
 print( 'Messaggio inviato!' )
