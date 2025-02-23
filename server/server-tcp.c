@@ -39,9 +39,9 @@ int release( int action, char *body );
 void cancel( char *body );
 void search( char *body );
 
-enum TypeRequest { RELEASE, AUTHENTICATION, TRANSITION, SEARCH };
-enum ReleaseAction { LOGOUT, CANCEL };
-enum AuthAction { LOGIN, SIGNUP };
+enum Type_request { AUTHENTICATION, SESSION, RELEASE, SEARCH };
+enum Release_action { LOGOUT, CANCEL };
+enum Authentication_action { SIGNIN, SIGNUP };
 
 int main( void ) {
 
@@ -137,14 +137,14 @@ int request( char *buffer ) {
     printf( "Tipo di richiesta: %d%d\n", type, action );
 
     switch( type ) {
-        case RELEASE:
-            response = release( action, body );
-            break;
         case AUTHENTICATION:
             response = authentication( action, body );
             break;
-        case TRANSITION:
-            response = 2;
+        case SESSION:
+            response = 1;
+            break;
+        case RELEASE:
+            response = release( action, body );
             break;
         case SEARCH:
             search( body );
@@ -203,11 +203,11 @@ int release( int action, char *body ) {
 
     switch( action ) {
         case LOGOUT:
-            result = 0;
+            result = 2;
             break;
         case CANCEL:
             cancel( body );
-            result = 0;
+            result = 2;
             break;
         default:
             result = -1;
@@ -235,8 +235,8 @@ void cancel( char *body ) {
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    puts( username );
-    puts( password );
+    printf( "Username: %s\n", username );
+    printf( "Password: %s\n", password );
 
     /* if ( accountCancel() ) {
             return 1;
@@ -251,12 +251,12 @@ int authentication( int action, char *body ) {
     int result;
 
     switch( action ) {
-        case LOGIN:
-            result = 1;
+        case SIGNIN:
+            result = 0;
             break;
         case SIGNUP:
             signup( body );
-            result = 1;
+            result = 0;
             break;
         default:
             return -1;
@@ -272,8 +272,8 @@ void signup( char *body ) {
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    puts( username );
-    puts( password );
+    printf( "Username: %s\n", username );
+    printf( "Password: %s\n", password );
 
     /* if ( accountCreate() ) {
             return 1;
@@ -293,7 +293,3 @@ void search( char *body ) {
     snprintf( command, sizeof( command ), "./search.sh \"%s\"", name );
     system( command );
 }
-
-
-
-
