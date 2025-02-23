@@ -31,13 +31,13 @@ void signal( int *lock );
 int request( char *buffer );
 void response( int valid , int *sdb );
 char *split( char *buffer, int *type, int *action );
-void extract( char *remainderPtr, char *username, char *password );
+void extract( char *body, char *username, char *password );
 
-int authentication( int action, char *remainderPtr );
-void signup( char *remainderPtr );
-int release( int action, char *remainderPtr );
-void cancel( char *remainderPtr );
-void search( char *remainderPtr );
+int authentication( int action, char *body );
+void signup( char *body );
+int release( int action, char *body );
+void cancel( char *body );
+void search( char *body );
 
 enum TypeRequest { RELEASE, AUTHENTICATION, TRANSITION, SEARCH };
 enum ReleaseAction { LOGOUT, CANCEL };
@@ -132,22 +132,22 @@ void signal( int *lock ) {
 int request( char *buffer ) {
 
     int response, type, action;
-    char *remainderPtr = split( buffer, &type, &action );
+    char *body = split( buffer, &type, &action );
 
     printf( "Tipo di richiesta: %d%d\n", type, action );
 
     switch( type ) {
         case RELEASE:
-            response = release( action, remainderPtr );
+            response = release( action, body );
             break;
         case AUTHENTICATION:
-            response = authentication( action, remainderPtr );
+            response = authentication( action, body );
             break;
         case TRANSITION:
             response = 2;
             break;
         case SEARCH:
-            search( remainderPtr );
+            search( body );
             response = 3;
             break;
         default:
@@ -162,14 +162,16 @@ void response( int valid, int *sdb ) {
 
     char message_response[ 1024 ] = { '\0' };
 
-    if ( valid >= 0 ) {
+    if ( valid >= 0 ) { // Il server ha compreso e accettato con successo la richiesta del client
+                        // e, in risposta, invia una conferma dell'avvenuta comprensione.
         strcpy( message_response, "200 OK" );
 
         if( send( *sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
             perror( "Errore ricevuto dalla primitiva send" );
             pthread_exit( ( void * )1 );
         }
-    } else {
+    } else { // Il server non ha compreso la richiesta del client e, in risposta, invia
+             // un codice corrispondende a tale evento.
         strcpy( message_response, "400 Bad Request" );
 
         if( send( *sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
@@ -191,10 +193,11 @@ char *split( char *buffer, int *type, int *action ) {
 
     return buffer; // Tale variabile contiene l'indirizzo di memoria
                    // del buffer, dove è memorizzato il messaggio,
-                   // aumentano di due indirizzi
+                   // aumentato di due indirizzi. Ciò corrisponde
+                   // al corpo del messaggio
 }
 
-int release( int action, char *remainderPtr ) {
+int release( int action, char *body ) {
 
     int result;
 
@@ -203,7 +206,7 @@ int release( int action, char *remainderPtr ) {
             result = 0;
             break;
         case CANCEL:
-            cancel( remainderPtr );
+            cancel( body );
             result = 0;
             break;
         default:
@@ -214,23 +217,23 @@ int release( int action, char *remainderPtr ) {
     return result;
 }
 
-void extract( char *remainderPtr, char *username, char *password ) {
+void extract( char *body, char *username, char *password ) {
 
-    for( ; *remainderPtr != ' '; remainderPtr++, username++ )
-        *username = *remainderPtr;
+    for( ; *body != ' '; body++, username++ )
+        *username = *body;
     *username = '\0';
 
-    remainderPtr++;
-    for( ; *remainderPtr != '\0'; remainderPtr++, password++ )
-        *password = *remainderPtr;
+    body++;
+    for( ; *body != '\0'; body++, password++ )
+        *password = *body;
     *password = '\0';
 }
 
-
-void cancel( char *remainderPtr ) {
+void cancel( char *body ) {
 
     char username[ 20 ], password[ 20 ];
-    extract( remainderPtr, username, password );
+    // Estrazione dell'username e della password dal corpo del messaggio
+    extract( body, username, password );
 
     puts( username );
     puts( password );
@@ -243,7 +246,7 @@ void cancel( char *remainderPtr ) {
     */
 }
 
-int authentication( int action, char *remainderPtr ) {
+int authentication( int action, char *body ) {
 
     int result;
 
@@ -252,7 +255,7 @@ int authentication( int action, char *remainderPtr ) {
             result = 1;
             break;
         case SIGNUP:
-            signup( remainderPtr );
+            signup( body );
             result = 1;
             break;
         default:
@@ -263,10 +266,11 @@ int authentication( int action, char *remainderPtr ) {
     return result;
 }
 
-void signup( char *remainderPtr ) {
+void signup( char *body ) {
 
     char username[ 20 ], password[ 20 ];
-    extract( remainderPtr, username, password );
+    // Estrazione dell'username e della password dal corpo del messaggio
+    extract( body, username, password );
 
     puts( username );
     puts( password );
@@ -279,12 +283,12 @@ void signup( char *remainderPtr ) {
     */
 }
 
-void search( char *remainderPtr ) {
+void search( char *body ) {
 
     char name[ 40 ];
     char command[ 100 ];
 
-    strcpy( name, remainderPtr );
+    strcpy( name, body );
 
     snprintf( command, sizeof( command ), "./search.sh \"%s\"", name );
     system( command );
