@@ -12,6 +12,7 @@
 #include <semaphore.h>
 
 #include <sys/types.h>
+#include <ctype.h>
 
 #define domain sin_family
 #define port sin_port
@@ -30,8 +31,12 @@ void signal( int *lock );
 int request( char *buffer );
 void response( int valid , int *sdb );
 char *split( char *buffer, int *type, int *action );
+void extract( char *remainderPtr, char *username, char *password );
 
-void authentication( char *remainderPtr );
+int authentication( int action, char *remainderPtr );
+void signup( char *remainderPtr );
+int release( int action, char *remainderPtr );
+void cancel( char *remainderPtr );
 void search( char *remainderPtr );
 
 enum TypeRequest { RELEASE, AUTHENTICATION, TRANSITION, SEARCH };
@@ -133,11 +138,10 @@ int request( char *buffer ) {
 
     switch( type ) {
         case RELEASE:
-            response = 0;
+            response = release( action, remainderPtr );
             break;
         case AUTHENTICATION:
-            authentication( remainderPtr );
-            response = 1;
+            response = authentication( action, remainderPtr );
             break;
         case TRANSITION:
             response = 2;
@@ -177,38 +181,102 @@ void response( int valid, int *sdb ) {
 
 char *split( char *buffer, int *type, int *action ) {
 
-    char *remainderPtr;
-    unsigned long int code = strtoul( buffer, &remainderPtr, 10 );
+    unsigned int code[ 2 ];
 
-    if ( code < 10 ) {
-        *type = code % 10;
-        *action = 0;
-    }
-    else {
-        *action = code % 10;
-        code = code / 10;
-        *type = code % 10;
-    }
+    for( int i = 0; isdigit( *buffer ); buffer++, i++ )
+        code[ i ] = ( int )*buffer - 48;
 
-    return remainderPtr;
+    *type = code[ 0 ];
+    *action = code[ 1 ];
+
+    return buffer; // Tale variabile contiene l'indirizzo di memoria
+                   // del buffer, dove è memorizzato il messaggio,
+                   // aumentano di due indirizzi
 }
 
-void authentication( char *remainderPtr ) {
+int release( int action, char *remainderPtr ) {
 
-    char username[ 20 ], password[ 20 ];
-    int i;
+    int result;
 
-    for( i = 0; *remainderPtr != ' '; remainderPtr++, i++ )
-        username[ i ] = *remainderPtr;
-    username[ i ] = '\0';
+    switch( action ) {
+        case LOGOUT:
+            result = 0;
+            break;
+        case CANCEL:
+            cancel( remainderPtr );
+            result = 0;
+            break;
+        default:
+            result = -1;
+            break;
+    }
+
+    return result;
+}
+
+void extract( char *remainderPtr, char *username, char *password ) {
+
+    for( ; *remainderPtr != ' '; remainderPtr++, username++ )
+        *username = *remainderPtr;
+    *username = '\0';
 
     remainderPtr++;
-    for( i = 0; *remainderPtr != '\0'; remainderPtr++, i++ )
-        password[ i ] = *remainderPtr;
-    password[ i ] = '\0';
+    for( ; *remainderPtr != '\0'; remainderPtr++, password++ )
+        *password = *remainderPtr;
+    *password = '\0';
+}
 
-    printf( "Username: %s\n", username );
-    printf( "Password: %s\n", password );
+
+void cancel( char *remainderPtr ) {
+
+    char username[ 20 ], password[ 20 ];
+    extract( remainderPtr, username, password );
+
+    puts( username );
+    puts( password );
+
+    /* if ( accountCancel() ) {
+            return 1;
+       } else {
+            return 0;
+       }
+    */
+}
+
+int authentication( int action, char *remainderPtr ) {
+
+    int result;
+
+    switch( action ) {
+        case LOGIN:
+            result = 1;
+            break;
+        case SIGNUP:
+            signup( remainderPtr );
+            result = 1;
+            break;
+        default:
+            return -1;
+            break;
+    }
+
+    return result;
+}
+
+void signup( char *remainderPtr ) {
+
+    char username[ 20 ], password[ 20 ];
+    extract( remainderPtr, username, password );
+
+    puts( username );
+    puts( password );
+
+    /* if ( accountCreate() ) {
+            return 1;
+       } else {
+            return 0;
+       }
+    */
 }
 
 void search( char *remainderPtr ) {
@@ -221,5 +289,7 @@ void search( char *remainderPtr ) {
     snprintf( command, sizeof( command ), "./search.sh \"%s\"", name );
     system( command );
 }
+
+
 
 
