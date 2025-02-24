@@ -35,9 +35,11 @@ void extract( char *body, char *username, char *password );
 
 int authentication( int action, char *body );
 void signup( char *body );
+void signin( char *body );
 int release( int action, char *body );
 void cancel( char *body );
 void search( char *body );
+int find( char *username, char *password );
 
 enum Type_request { AUTHENTICATION, SESSION, RELEASE, SEARCH };
 enum Release_action { LOGOUT, CANCEL };
@@ -231,19 +233,17 @@ void extract( char *body, char *username, char *password ) {
 
 void cancel( char *body ) {
 
-    char username[ 20 ], password[ 20 ];
+    char username[ 20 ], password[ 20 ], command[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    printf( "Username: %s\n", username );
-    printf( "Password: %s\n", password );
+    snprintf( command, sizeof( command ), "./cancel.sh \"%s\" \"%s\"",
+              username, password );
 
-    /* if ( accountCancel() ) {
-            return 1;
-       } else {
-            return 0;
-       }
-    */
+    if(  system( command ) )
+        printf( "%s\n", "Account cancellato!" );
+    else
+        printf( "%s\n", "Cancellazione account fallita!" );
 }
 
 int authentication( int action, char *body ) {
@@ -252,6 +252,7 @@ int authentication( int action, char *body ) {
 
     switch( action ) {
         case SIGNIN:
+            signin( body );
             result = 0;
             break;
         case SIGNUP:
@@ -268,28 +269,47 @@ int authentication( int action, char *body ) {
 
 void signup( char *body ) {
 
+    char username[ 20 ], password[ 20 ], command[ 100 ];
+    // Estrazione dell'username e della password dal corpo del messaggio
+    extract( body, username, password );
+
+    if ( find( username, password ) )
+        printf( "%s\n", "Account esistente" );
+    else {
+        snprintf( command, sizeof( command ), "echo \"%s %s\" >> accounts.dat",
+              username, password );
+        system( command );
+
+        printf( "%s\n", "Account creato" );
+    }
+}
+
+void signin( char *body ) {
+
     char username[ 20 ], password[ 20 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    printf( "Username: %s\n", username );
-    printf( "Password: %s\n", password );
-
-    /* if ( accountCreate() ) {
-            return 1;
-       } else {
-            return 0;
-       }
-    */
+    if( find( username, password ) )
+        printf( "%s", "Accesso consentito!\n" );
+    else
+        printf( "%s", "Accesso negato!\n" );
 }
 
 void search( char *body ) {
 
-    char name[ 40 ];
-    char command[ 100 ];
-
+    char name[ 40 ], command[ 100 ];
     strcpy( name, body );
 
     snprintf( command, sizeof( command ), "./search.sh \"%s\"", name );
     system( command );
+}
+
+int find( char *username, char *password ) {
+
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ), "./find.sh \"%s\" \"%s\"",
+              username, password );
+    return system( command );
 }
