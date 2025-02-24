@@ -13,6 +13,13 @@ method = int( method )
 action = int( action )
 
 if method == 0:
+    if action == 0 or action == 1:
+        username = input( 'Username: ' )
+        password = input( 'Password: ')
+
+        body = username + ' ' + password
+        message = str( method ) + str( action ) + body
+elif method == 2:
     if action == 1:
         username = input( 'Username: ' )
         password = input( 'Password: ')
@@ -21,13 +28,7 @@ if method == 0:
         message = str( method ) + str( action ) + body
     else:
         message = str( method ) + str( action )
-elif method == 1:
-    if action == 0 or action == 1:
-        username = input( 'Username: ' )
-        password = input( 'Password: ')
 
-        body = username + ' ' + password
-        message = str( method ) + str( action ) + body
 elif method == 3:
     film = input( 'Nome film: ' )
     message = str( method ) + str( action ) + film
