@@ -13,6 +13,7 @@
 
 #include <sys/types.h>
 #include <ctype.h>
+#include <fcntl.h>
 
 #define domain sin_family
 #define port sin_port
@@ -28,8 +29,10 @@ void *runner( void *sda );
 void wait( int *lock );
 void signal( int *lock );
 
-int request( char *buffer );
-void response( int valid , int *sdb );
+int request( char *buffer, int *type, int *action, char **body );
+// char *processing( int result, int type, int action );
+void response( int result, char *message, int *sdb );
+// char *approve( int type, int action, char *message );
 char *split( char *buffer, int *type, int *action );
 void extract( char *body, char *username, char *password );
 
@@ -101,21 +104,44 @@ void *runner( void *sda ) {
     int sdb = dup( *( int * )sda );
     signal( &lock ); // Il thread figlio sblocca il lucchetto e permette al thread
                      // padre di utilizzare sda per la creazione di una nuova socket
-    char buffer[ 1024 ] = { '\0' };
+    char *body = NULL, buffer[ 1024 ];
+    int result, type, action, res;
 
-    if( read( sdb, buffer, sizeof( buffer ) - 1 ) < 0 ) {
-        perror( "Errore ricevuto dalla primitiva read" );
-        pthread_exit( ( void * )1 );
+    while( 1 ) {
+
+        res = read( sdb, buffer, sizeof( buffer ) - 1 );
+
+        if( res < 0 ) {
+            perror( "Errore ricevuto dalla primitiva read" );
+            pthread_exit( ( void * )1 );
+        }
+        else if( res == 0 ) {
+            // QUando viene restituito un valore uguale a 0 significa EOF
+            // ( end-of-file ) ovvero indica che il punto terminale posto
+            // all'altro estremo della connessione ha voluto chiudere la
+            // connessione e quindi il file descriptor non potrà più
+            // essere utilizzato per leggere dati.
+            break;
+        }
+
+        buffer[ res ] = '\0';
+        printf( "%s\n", buffer );
+
+        sem_wait( &semaphore );
+        /* Sezione d'ingresso */
+        sum = sum + 1;  /* Sezione critica */
+        /* Sezione di uscita */
+        sem_post( &semaphore );
+
+        printf( "Client: %d\n", sdb );
+
+        result = request( buffer, &type, &action, &body );
+        response( result, body, &sdb );
+
+        if ( result == RELEASE )
+            break;
     }
 
-    sem_wait( &semaphore );
-     /* Sezione d'ingresso */
-    sum = sum + 1;  /* Sezione critica */
-     /* Sezione di uscita */
-    sem_post( &semaphore );
-
-    printf( "Client: %d\n", sum );
-    response( request( buffer ), &sdb );
     close( sdb );
 
     puts( "Connessione terminata" );
@@ -131,55 +157,54 @@ void signal( int *lock ) {
     *lock = *lock + 1;
 }
 
-int request( char *buffer ) {
+int request( char *buffer, int *type, int *action, char **body ) {
 
-    int response, type, action;
-    char *body = split( buffer, &type, &action );
+    int result;
+    *body = split( buffer, type, action );
 
-    printf( "Tipo di richiesta: %d%d\n", type, action );
+    printf( "Tipo di richiesta: %d%d\n", *type, *action );
 
-    switch( type ) {
+    switch( *type ) {
         case AUTHENTICATION:
-            response = authentication( action, body );
+            result = authentication( *action, *body );
             break;
         case SESSION:
-            response = 1;
+            result = 1;
             break;
         case RELEASE:
-            response = release( action, body );
+            result = release( *action, *body );
             break;
         case SEARCH:
-            search( body );
-            response = 3;
+            search( *body );
+            result = 3;
             break;
         default:
-            response = -1;
+            result = -1;
             break;
     }
 
-    return response;
+    return result;
 }
 
-void response( int valid, int *sdb ) {
 
-    char message_response[ 1024 ] = { '\0' };
+void response( int result, char *body, int *sdb ) {
 
-    if ( valid >= 0 ) { // Il server ha compreso e accettato con successo la richiesta del client
-                        // e, in risposta, invia una conferma dell'avvenuta comprensione.
-        strcpy( message_response, "200 OK" );
+    char message[ 1024 ];
+    // Il server non ha compreso la richiesta del client e, in risposta, invia
+    // un codice corrispondende a tale evento.
+    if ( result < 0 )
+        strcpy( message, "404 Bad Request " );
+    // Il server ha compreso e accettato con successo la richiesta del client
+    // e, in risposta, invia una conferma dell'avvenuta comprensione.
+    else
+        strcpy( message, "200 OK: " );
 
-        if( send( *sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
-            perror( "Errore ricevuto dalla primitiva send" );
-            pthread_exit( ( void * )1 );
-        }
-    } else { // Il server non ha compreso la richiesta del client e, in risposta, invia
-             // un codice corrispondende a tale evento.
-        strcpy( message_response, "400 Bad Request" );
+    strcat( message, body );
+    message[ strlen( message ) + 1 ] = '\0';
 
-        if( send( *sdb, ( const char * )message_response, strlen( message_response ), 0 ) < 0 ) {
-            perror( "Errore ricevuto dalla primitiva send" );
-            pthread_exit( ( void * )1 );
-        }
+    if( write( *sdb, ( const char * )message, strlen( message ) ) < 0 ) {
+        perror( "Errore ricevuto dalla primitiva write" );
+        pthread_exit( ( void * )1 );
     }
 }
 
@@ -199,26 +224,6 @@ char *split( char *buffer, int *type, int *action ) {
                    // al corpo del messaggio
 }
 
-int release( int action, char *body ) {
-
-    int result;
-
-    switch( action ) {
-        case LOGOUT:
-            result = 2;
-            break;
-        case CANCEL:
-            cancel( body );
-            result = 2;
-            break;
-        default:
-            result = -1;
-            break;
-    }
-
-    return result;
-}
-
 void extract( char *body, char *username, char *password ) {
 
     for( ; *body != ' '; body++, username++ )
@@ -229,21 +234,6 @@ void extract( char *body, char *username, char *password ) {
     for( ; *body != '\0'; body++, password++ )
         *password = *body;
     *password = '\0';
-}
-
-void cancel( char *body ) {
-
-    char username[ 20 ], password[ 20 ], command[ 100 ];
-    // Estrazione dell'username e della password dal corpo del messaggio
-    extract( body, username, password );
-
-    snprintf( command, sizeof( command ), "./cancel.sh \"%s\" \"%s\"",
-              username, password );
-
-    if(  system( command ) )
-        printf( "%s\n", "Account cancellato!" );
-    else
-        printf( "%s\n", "Cancellazione account fallita!" );
 }
 
 int authentication( int action, char *body ) {
@@ -267,23 +257,6 @@ int authentication( int action, char *body ) {
     return result;
 }
 
-void signup( char *body ) {
-
-    char username[ 20 ], password[ 20 ], command[ 100 ];
-    // Estrazione dell'username e della password dal corpo del messaggio
-    extract( body, username, password );
-
-    if ( find( username, password ) )
-        printf( "%s\n", "Account esistente" );
-    else {
-        snprintf( command, sizeof( command ), "echo \"%s %s\" >> accounts.dat",
-              username, password );
-        system( command );
-
-        printf( "%s\n", "Account creato" );
-    }
-}
-
 void signin( char *body ) {
 
     char username[ 20 ], password[ 20 ];
@@ -291,10 +264,63 @@ void signin( char *body ) {
     extract( body, username, password );
 
     if( find( username, password ) )
-        printf( "%s", "Accesso consentito!\n" );
+        strcpy( body, "Accesso consentito!" );
     else
-        printf( "%s", "Accesso negato!\n" );
+        strcpy( body, "Accesso negato!" );
 }
+
+void signup( char *body ) {
+
+    char username[ 20 ], password[ 20 ], command[ 100 ];
+    // Estrazione dell'username e della password dal corpo del messaggio
+    extract( body, username, password );
+
+    if ( find( username, password ) )
+        strcpy( body, "Account esistente!" );
+    else {
+        snprintf( command, sizeof( command ), "echo \"%s %s\" >> accounts.dat",
+              username, password );
+
+        system( command );
+        strcpy( body, "Account creato!" );
+    }
+}
+
+int release( int action, char *body ) {
+
+    int result;
+
+    switch( action ) {
+        case LOGOUT:
+            result = 2;
+            break;
+        case CANCEL:
+            cancel( body );
+            result = 2;
+            break;
+        default:
+            result = -1;
+            break;
+    }
+
+    return result;
+}
+
+void cancel( char *body ) {
+
+    char username[ 20 ], password[ 20 ], command[ 100 ];
+    // Estrazione dell'username e della password dal corpo del messaggio
+    extract( body, username, password );
+
+    snprintf( command, sizeof( command ), "./cancel.sh \"%s\" \"%s\"",
+              username, password );
+
+    if( system( command ) )
+        strcpy( body, "Account cancellato!" );
+    else
+        strcpy( body,"Cancellazione account fallita!" );
+}
+
 
 void search( char *body ) {
 
@@ -302,7 +328,11 @@ void search( char *body ) {
     strcpy( name, body );
 
     snprintf( command, sizeof( command ), "./search.sh \"%s\"", name );
-    system( command );
+
+    if ( system( command ) )
+        strcpy( body, "Film trovato" );
+    else
+        strcpy( body, "Film non trovato" );
 }
 
 int find( char *username, char *password ) {
