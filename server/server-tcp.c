@@ -329,7 +329,7 @@ void signout( int sdb, char *body ) {
     // L'utente non può disconnetterne un altro perché
     // la funzione si basa solo l'dentificativo
     // associato alla connessione che associa
-    // ogni utente al suo account.
+    // ogni connessione a un account.
 
     char command[ 100 ];
 
