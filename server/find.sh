@@ -8,6 +8,6 @@ while read user passwd; do
     if [[ $username == $user ]] && [[ $password == $passwd ]]; then
         status=1; break
     fi
-done < accounts.dat
+done < signed.dat
 
 exit $status

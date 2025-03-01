@@ -29,20 +29,20 @@ void *runner( void *sda );
 void wait( int *lock );
 void signal( int *lock );
 
-int request( char *buffer, int *type, int *action, char **body );
-// char *processing( int result, int type, int action );
+int request( int sdb, char *buffer, int *type, int *action, char **body );
 void response( int result, char *message, int *sdb );
-// char *approve( int type, int action, char *message );
 char *split( char *buffer, int *type, int *action );
 void extract( char *body, char *username, char *password );
 
-int authentication( int action, char *body );
-void signup( char *body );
-void signin( char *body );
-int release( int action, char *body );
-void cancel( char *body );
+int authentication( int sdb, int action, char *body );
+void signup( int sdb, char *body );
+void signin( int sdb, char *body );
+void signout( int sdb, char *body );
+int release( int sdb, int action, char *body );
+void cancel( int sdb, char *body );
 void search( char *body );
 int find( char *username, char *password );
+int look( int sdb );
 
 enum Type_request { AUTHENTICATION, SESSION, RELEASE, SEARCH };
 enum Release_action { LOGOUT, CANCEL };
@@ -125,7 +125,6 @@ void *runner( void *sda ) {
         }
 
         buffer[ res ] = '\0';
-        printf( "%s\n", buffer );
 
         sem_wait( &semaphore );
         /* Sezione d'ingresso */
@@ -135,7 +134,11 @@ void *runner( void *sda ) {
 
         printf( "Client: %d\n", sdb );
 
-        result = request( buffer, &type, &action, &body );
+        // Le funzioni request() e response() usano il passaggio di parametri per riferimento
+        // per poter essere in grado di "restituire" più valori alla loro funzione
+        // chiamante modificando variabili nella funzione chiamante.
+
+        result = request( sdb, buffer, &type, &action, &body );
         response( result, body, &sdb );
 
         if ( result == RELEASE )
@@ -157,7 +160,7 @@ void signal( int *lock ) {
     *lock = *lock + 1;
 }
 
-int request( char *buffer, int *type, int *action, char **body ) {
+int request( int sdb, char *buffer, int *type, int *action, char **body ) {
 
     int result;
     *body = split( buffer, type, action );
@@ -166,13 +169,13 @@ int request( char *buffer, int *type, int *action, char **body ) {
 
     switch( *type ) {
         case AUTHENTICATION:
-            result = authentication( *action, *body );
+            result = authentication( sdb, *action, *body );
             break;
         case SESSION:
             result = 1;
             break;
         case RELEASE:
-            result = release( *action, *body );
+            result = release( sdb, *action, *body );
             break;
         case SEARCH:
             search( *body );
@@ -185,7 +188,6 @@ int request( char *buffer, int *type, int *action, char **body ) {
 
     return result;
 }
-
 
 void response( int result, char *body, int *sdb ) {
 
@@ -236,17 +238,17 @@ void extract( char *body, char *username, char *password ) {
     *password = '\0';
 }
 
-int authentication( int action, char *body ) {
+int authentication( int sdb, int action, char *body ) {
 
     int result;
 
     switch( action ) {
         case SIGNIN:
-            signin( body );
+            signin( sdb, body );
             result = 0;
             break;
         case SIGNUP:
-            signup( body );
+            signup( sdb, body );
             result = 0;
             break;
         default:
@@ -257,19 +259,30 @@ int authentication( int action, char *body ) {
     return result;
 }
 
-void signin( char *body ) {
+void signin( int sdb, char *body ) {
 
-    char username[ 20 ], password[ 20 ];
+    char username[ 20 ], password[ 20 ], command[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    if( find( username, password ) )
-        strcpy( body, "Accesso consentito!" );
+    // L'utente potrebbe accedere per conto di un altro, ma tale funzione
+    // lo impedisce.
+    if( find( username, password ) ) {
+        if( !look( sdb ) ) {
+            snprintf( command, sizeof( command ), "echo %d \"%s\" \"%s\" >> connessi.dat",
+              sdb, username, password );
+
+            system( command );
+            strcpy( body, "Accesso consentito!" );
+        }
+        else
+            strcpy( body, "Utente già connesso!" );
+    }
     else
         strcpy( body, "Accesso negato!" );
 }
 
-void signup( char *body ) {
+void signup( int sdb, char *body ) {
 
     char username[ 20 ], password[ 20 ], command[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
@@ -278,24 +291,29 @@ void signup( char *body ) {
     if ( find( username, password ) )
         strcpy( body, "Account esistente!" );
     else {
-        snprintf( command, sizeof( command ), "echo \"%s %s\" >> accounts.dat",
+        snprintf( command, sizeof( command ), "echo \"%s %s\" >> signed.dat",
               username, password );
-
         system( command );
+
+        snprintf( command, sizeof( command ), "echo %d \"%s %s\" >> connessi.dat",
+              sdb, username, password );
+        system( command );
+
         strcpy( body, "Account creato!" );
     }
 }
 
-int release( int action, char *body ) {
+int release( int sdb, int action, char *body ) {
 
     int result;
 
     switch( action ) {
         case LOGOUT:
+            signout( sdb, body );
             result = 2;
             break;
         case CANCEL:
-            cancel( body );
+            cancel( sdb, body );
             result = 2;
             break;
         default:
@@ -306,21 +324,47 @@ int release( int action, char *body ) {
     return result;
 }
 
-void cancel( char *body ) {
+void signout( int sdb, char *body ) {
 
-    char username[ 20 ], password[ 20 ], command[ 100 ];
+    // L'utente non può disconnetterne un altro perché
+    // la funzione si basa solo l'dentificativo
+    // associato alla connessione che in questo caso associa
+    // ogni utente al suo account.
+
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ), "./reset.sh %d",
+              sdb );
+
+    if( system( command ) )
+        strcpy( body, "Account disconnesso!" );
+    else
+        strcpy( body, "Account non connesso!" );
+}
+
+void cancel( int sdb, char *body ) {
+
+    // La funzione cancel poggia sull'assunto che l'utente che desidera
+    // cancellare il suo account abbia effettuato in un precedente momento
+    // l'accesso a quest'ultimo.
+
+    char username[ 20 ], password[ 20 ], command1[ 100 ], command2[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    snprintf( command, sizeof( command ), "./cancel.sh \"%s\" \"%s\"",
-              username, password );
+    snprintf( command1, sizeof( command1 ), "./reset.sh %d",
+              sdb );
 
-    if( system( command ) )
+    if( system( command1 ) ) {
+        snprintf( command2, sizeof( command2 ), "./cancel.sh \"%s\" \"%s\"",
+                  username, password );
+        system( command2 );
+
         strcpy( body, "Account cancellato!" );
+    }
     else
-        strcpy( body,"Cancellazione account fallita!" );
+        strcpy( body,"Cancellazione Account fallita!" );
 }
-
 
 void search( char *body ) {
 
@@ -341,5 +385,14 @@ int find( char *username, char *password ) {
 
     snprintf( command, sizeof( command ), "./find.sh \"%s\" \"%s\"",
               username, password );
+    return system( command );
+}
+
+int look( int sdb ) {
+
+    char command[ 100 ];
+
+     snprintf( command, sizeof( command ), "./look.sh %d",
+              sdb );
     return system( command );
 }
