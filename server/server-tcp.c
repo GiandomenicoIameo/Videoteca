@@ -265,7 +265,7 @@ void signin( int sdb, char *body ) {
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    // L'utente potrebbe accedere per conto di un altro, ma tale funzione
+    // L'utente potrebbe accedere per conto di un altro, ma il seguente controllo
     // lo impedisce.
     if( find( username, password ) ) {
         if( !look( sdb ) ) {
