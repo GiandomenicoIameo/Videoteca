@@ -66,7 +66,6 @@ while True:
     receive_message = send( client_socket, message )
     print( 'Messaggio ricevuto dal server:', receive_message.decode() )
 
-print( 'messaggio da inviare:', message )
 receive_message = send( client_socket, message )
 print( 'Messaggio ricevuto dal server:', receive_message.decode() )
 
