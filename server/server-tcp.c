@@ -31,18 +31,10 @@ void signal( int *lock );
 
 int request( int sdb, char *buffer, int *type, int *action, char **body );
 void response( int result, char *message, int *sdb );
-char *split( char *buffer, int *type, int *action );
-void extract( char *body, char *username, char *password );
 
 int authentication( int sdb, int action, char *body );
-void signup( int sdb, char *body );
-void signin( int sdb, char *body );
-void signout( int sdb, char *body );
 int release( int sdb, int action, char *body );
-void cancel( int sdb, char *body );
 void search( char *body );
-int find( char *username, char *password );
-int look( int sdb );
 
 enum Type_request { AUTHENTICATION, SESSION, RELEASE, SEARCH };
 enum Release_action { LOGOUT, CANCEL };
@@ -162,6 +154,9 @@ void signal( int *lock ) {
 
 int request( int sdb, char *buffer, int *type, int *action, char **body ) {
 
+    char *split( char *buffer, int *type, int *action );
+    void extract( char *body, char *username, char *password );
+
     int result;
     *body = split( buffer, type, action );
 
@@ -240,16 +235,21 @@ void extract( char *body, char *username, char *password ) {
 
 int authentication( int sdb, int action, char *body ) {
 
-    int result;
+    // I prototipi per le funzioni signin() e signup() sono inclusi
+    // nel corpo della funzione authentication perché è l'unica
+    // funzione che invoca cancel() e signout().
+
+    void signin( int sdb, char *body );
+    void signup( int sdb, char *body );
+
+    int result = 0;
 
     switch( action ) {
         case SIGNIN:
             signin( sdb, body );
-            result = 0;
             break;
         case SIGNUP:
             signup( sdb, body );
-            result = 0;
             break;
         default:
             return -1;
@@ -261,6 +261,9 @@ int authentication( int sdb, int action, char *body ) {
 
 void signin( int sdb, char *body ) {
 
+    int find( char *username, char *password );
+    int look( int sdb );
+
     char username[ 20 ], password[ 20 ], command[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
@@ -268,7 +271,11 @@ void signin( int sdb, char *body ) {
     // L'utente potrebbe accedere per conto di un altro, ma il seguente controllo
     // lo impedisce.
     if( find( username, password ) ) {
+        // Il controllo inizia con la funzione find() che verifica se l'username
+        // e la password sono associati a un account registrato presso il server
         if( !look( sdb ) ) {
+        // Se l'account esiste viene effettuato un controllo per verificare se
+        // l'account è attualmente connesso.
             snprintf( command, sizeof( command ), "echo %d \"%s\" \"%s\" >> connessi.dat",
               sdb, username, password );
 
@@ -283,6 +290,8 @@ void signin( int sdb, char *body ) {
 }
 
 void signup( int sdb, char *body ) {
+
+    int find( char *username, char *password );
 
     char username[ 20 ], password[ 20 ], command[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
@@ -305,16 +314,21 @@ void signup( int sdb, char *body ) {
 
 int release( int sdb, int action, char *body ) {
 
-    int result;
+    // I prototipi per le funzioni cancel() e signout() sono inclusi
+    // nel corpo della funzione release perché è l'unica funzione che
+    // invoca cancel() e signout()
+
+    void cancel( int sdb, char *body );
+    void signout( int sdb, char *body );
+
+    int result = 2;
 
     switch( action ) {
         case LOGOUT:
             signout( sdb, body );
-            result = 2;
             break;
         case CANCEL:
             cancel( sdb, body );
-            result = 2;
             break;
         default:
             result = -1;
@@ -327,8 +341,8 @@ int release( int sdb, int action, char *body ) {
 void signout( int sdb, char *body ) {
 
     // L'utente non può disconnetterne un altro perché
-    // la funzione si basa solo l'dentificativo
-    // associato alla connessione che associa
+    // la procedura si basa solo sull'dentificativo
+    // associato alla connessione che ha la funzione di collegare
     // ogni connessione a un account.
 
     char command[ 100 ];
@@ -356,6 +370,8 @@ void cancel( int sdb, char *body ) {
               sdb );
 
     if( system( command1 ) ) {
+        // L'if verifica se l'utente era connesso prima di effettuare la
+        // cancellazione dell'account.
         snprintf( command2, sizeof( command2 ), "./cancel.sh \"%s\" \"%s\"",
                   username, password );
         system( command2 );
@@ -396,3 +412,4 @@ int look( int sdb ) {
               sdb );
     return system( command );
 }
+

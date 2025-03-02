@@ -1,16 +1,14 @@
 #!/bin/bash
 
-declare -i status=0
+# Il seguente script effettua una ricerca all'interno del
+# file movies.dat ( di tutti i film ). Lo script restituisce
+# un exit code pari a 1 se lo ha trovato e un exit code
+# pari a 0 in caso contrario.
 
-IFS='\n'
-while read filmname; do
-    if [[ $1 =~ $filmname ]]; then
-        status=1; break
+while read filmname available; do
+    if [[ $1 == $filmname ]]; then
+        exit 1
     fi
 done < movies.dat
 
-if (( $status == 1 )); then
-    echo trovato
-else
-    echo non trovato
-fi
+exit 0
