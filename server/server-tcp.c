@@ -32,7 +32,11 @@ void signal( int *lock );
 int request( int sdb, char *buffer, int *type, int *action, char **body );
 void response( int result, char *message, int *sdb );
 
+void chartered( int sdb, char *body ); // richiesta di noleggio
+void returned( int sdb, char *body ); // richiesta di restituzione
+
 int authentication( int sdb, int action, char *body );
+int session( int sdb, int action, char *body );
 int release( int sdb, int action, char *body );
 void search( char *body );
 
@@ -116,7 +120,9 @@ void *runner( void *sda ) {
             break;
         }
 
-        buffer[ res ] = '\0';
+        buffer[ res ] = '\0'; // Tale istruzione di assegnazione è fondamentale
+                              // per le funzioni split() ed extract() in quanto consente
+                              // loro di capire il punto finale del corpo del messaggio.
 
         sem_wait( &semaphore );
         /* Sezione d'ingresso */
@@ -155,7 +161,6 @@ void signal( int *lock ) {
 int request( int sdb, char *buffer, int *type, int *action, char **body ) {
 
     char *split( char *buffer, int *type, int *action );
-    void extract( char *body, char *username, char *password );
 
     int result;
     *body = split( buffer, type, action );
@@ -167,7 +172,7 @@ int request( int sdb, char *buffer, int *type, int *action, char **body ) {
             result = authentication( sdb, *action, *body );
             break;
         case SESSION:
-            result = 1;
+            result = session( sdb, *action, *body );
             break;
         case RELEASE:
             result = release( sdb, *action, *body );
@@ -223,6 +228,12 @@ char *split( char *buffer, int *type, int *action ) {
 
 void extract( char *body, char *username, char *password ) {
 
+    // La procedura extract utilizza il passaggio per riferimento
+    // per "restituire" al chiamante più valori modificando variabili
+    // nella funzione chiamante. In questo caso vengono modificati
+    // gli array nella funzione chiamante relativi all'username e
+    // alla password, memorizzandovi delle stringhe.
+
     for( ; *body != ' '; body++, username++ )
         *username = *body;
     *username = '\0';
@@ -261,6 +272,8 @@ int authentication( int sdb, int action, char *body ) {
 
 void signin( int sdb, char *body ) {
 
+    void extract( char *body, char *username, char *password );
+
     int find( char *username, char *password );
     int look( int sdb );
 
@@ -291,6 +304,7 @@ void signin( int sdb, char *body ) {
 
 void signup( int sdb, char *body ) {
 
+    void extract( char *body, char *username, char *password );
     int find( char *username, char *password );
 
     char username[ 20 ], password[ 20 ], command[ 100 ];
@@ -310,6 +324,71 @@ void signup( int sdb, char *body ) {
 
         strcpy( body, "Account creato!" );
     }
+}
+
+int session( int sdb, int action, char *body ) {
+
+    int result = 1;
+
+    switch( action ) {
+        case 0:
+            chartered( sdb, body );
+            break;
+        case 1:
+            returned( sdb, body );
+            break;
+        case 2:
+            break;
+        case 3:
+            break;
+        default:
+            result = -1;
+            break;
+    }
+
+    return result;
+}
+
+void takeout( char *body, char *filmname, char *number, char *date ) {
+
+     for ( ; *body != '\0'; body++, filmname++ )
+        *filmname = *body;
+    *filmname = '\0';
+
+    body++;
+    for ( ; *body != '\0'; body++, number++ )
+        *number = *body;
+    *number = '\0';
+
+    if ( date ) {
+        body++;
+        for ( ; *body != '\0'; body++, date++ )
+            *date = *body;
+        *date = '\0';
+    }
+}
+
+void chartered( int sdb, char *body ) {
+
+    void takeout( char *body, char *filmname, char *number, char *date );
+
+    char filmname[ 40 ], number[ 5 ], date[ 15 ];
+    takeout( body, filmname, number, date );
+
+    puts( filmname );
+    puts( number );
+    puts( date );
+ }
+
+void returned( int sdb, char *body ) {
+
+    void takeout( char *body, char *filmname, char *number, char *date );
+
+    char filmname[ 40 ], number[ 5 ];
+    takeout( body, filmname, number, NULL );
+
+    puts( filmname );
+    puts( number );
 }
 
 int release( int sdb, int action, char *body ) {
@@ -357,6 +436,8 @@ void signout( int sdb, char *body ) {
 }
 
 void cancel( int sdb, char *body ) {
+
+    void extract( char *body, char *username, char *password );
 
     // La funzione cancel poggia sull'assunto che l'utente che desidera
     // cancellare il suo account abbia effettuato in un precedente momento
