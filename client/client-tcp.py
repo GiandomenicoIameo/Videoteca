@@ -1,4 +1,5 @@
 from socket import *
+import subprocess
 
 def send( socket, message ):
 
@@ -13,6 +14,31 @@ def authentication( head ):
     password = input( 'Password: ')
 
     message = head + username + ' ' + password
+    return message
+
+def session( head, action ):
+
+    if action == 0:
+        filmname = input( 'Nome film: ' )
+        number   = input( 'Inserisci la quantità: ' )
+        date     = input( 'Inserisci la data: ' )
+
+        message = head + filmname + '\0' + number + '\0' + date
+    elif action == 1:
+        filmname = input( 'Nome film: ' )
+        number   = input( 'Inserisci la quantità: ' )
+
+        message = head + filmname + '\0' + number + '\0'
+    elif action == 2:
+        filmname = input( 'Nome film: ' )
+        number   = input( 'Inserisci la quantità: ' )
+
+        path = "./add.sh"
+        result = subprocess.run( [ "bash", path, filmname, number ], capture_output = "True", text = "True" )
+        print( result.stdout )
+
+        message = head + filmname + '\0' + number + '\0'
+
     return message
 
 def release( head, action ):
@@ -53,6 +79,8 @@ while True:
 
     if method == 0:
         message = authentication( head )
+    elif method == 1:
+        message = session( head, action )
     elif method == 2:
         message = release( head, action )
         if action == 0 or action == 1:
