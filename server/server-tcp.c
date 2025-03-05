@@ -381,7 +381,8 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
     if( !status ) {
         snprintf( command2, sizeof( command2 ), "./date.sh %s", date );
 
-        if ( !WEXITSTATUS( system( command2 ) ) ) return 0;
+        if ( !WEXITSTATUS( system( command2 ) ) )
+            return 0;
         return 1;
     }
     else if( status == 1 )
