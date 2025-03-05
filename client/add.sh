@@ -3,4 +3,4 @@
 filmname=$1
 number=$2
 
-echo -e "$filmname\t\t$number" >> carrello
+echo $filmname:$number >> carrello.dat
