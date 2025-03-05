@@ -32,8 +32,9 @@ void signal( int *lock );
 int request( int sdb, char *buffer, int *type, int *action, char **body );
 void response( int result, char *message, int *sdb );
 
-void chartered( int sdb, char *body ); // richiesta di noleggio
+unsigned int checkmovie( char *filmname, char *number, char *date ); // controllo film
 void returned( int sdb, char *body ); // richiesta di restituzione
+void rented( int sdb, char *body ); // richiesta di noleggio
 
 int authentication( int sdb, int action, char *body );
 int session( int sdb, int action, char *body );
@@ -283,10 +284,10 @@ void signin( int sdb, char *body ) {
 
     // L'utente potrebbe accedere per conto di un altro, ma il seguente controllo
     // lo impedisce.
-    if( find( username, password ) ) {
+    if( !find( username, password ) ) {
         // Il controllo inizia con la funzione find() che verifica se l'username
         // e la password sono associati a un account registrato presso il server
-        if( !look( sdb ) ) {
+        if( look( sdb ) ) {
         // Se l'account esiste viene effettuato un controllo per verificare se
         // l'account è attualmente connesso.
             snprintf( command, sizeof( command ), "echo %d \"%s\" \"%s\" >> connessi.dat",
@@ -311,7 +312,7 @@ void signup( int sdb, char *body ) {
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    if ( find( username, password ) )
+    if ( !find( username, password ) )
         strcpy( body, "Account esistente!" );
     else {
         snprintf( command, sizeof( command ), "echo \"%s %s\" >> signed.dat",
@@ -332,14 +333,14 @@ int session( int sdb, int action, char *body ) {
 
     switch( action ) {
         case 0:
-            chartered( sdb, body );
+            rented( sdb, body );
             break;
         case 1:
-            returned( sdb, body );
             break;
         case 2:
             break;
         case 3:
+            returned( sdb, body );
             break;
         default:
             result = -1;
@@ -368,17 +369,48 @@ void takeout( char *body, char *filmname, char *number, char *date ) {
     }
 }
 
-void chartered( int sdb, char *body ) {
+unsigned int checkmovie( char *filmname, char *number, char *date ) {
+
+    int status;
+    char command1[ 100 ], command2[ 100 ];
+
+    snprintf( command1, sizeof( command1 ), "./available.sh \"%s\" %d",
+                filmname, atoi( number ) );
+    status = WEXITSTATUS( system( command1 ) );
+
+    if( !status ) {
+        snprintf( command2, sizeof( command2 ), "./date.sh %s", date );
+
+        if ( !WEXITSTATUS( system( command2 ) ) ) return 0;
+        return 1;
+    }
+    else if( status == 1 )
+        return 2;
+    return 3;
+ }
+
+ void rented( int sdb, char *body ) {
+
+    // Per il momento il noleggio è basato solo sulla data di restituizione,
+    // nome del film e quantità disponibile.
 
     void takeout( char *body, char *filmname, char *number, char *date );
 
-    char filmname[ 40 ], number[ 5 ], date[ 15 ];
-    takeout( body, filmname, number, date );
+    int res;
+    char filmname[ 40 ], number[ 5 ], date[ 20 ];
 
-    puts( filmname );
-    puts( number );
-    puts( date );
- }
+    takeout( body, filmname, number, date );
+    res = checkmovie( filmname, number, date );
+
+    if ( !res )
+        strcpy( body, "Noleggio approvato" );
+    else if ( res == 1 )
+        strcpy( body, "Data non valida" );
+    else if ( res == 2 )
+        strcpy( body, "Quantità non disponibile" );
+    else
+        strcpy( body, "Film non trovato" );
+}
 
 void returned( int sdb, char *body ) {
 
@@ -386,9 +418,6 @@ void returned( int sdb, char *body ) {
 
     char filmname[ 40 ], number[ 5 ];
     takeout( body, filmname, number, NULL );
-
-    puts( filmname );
-    puts( number );
 }
 
 int release( int sdb, int action, char *body ) {
@@ -429,7 +458,7 @@ void signout( int sdb, char *body ) {
     snprintf( command, sizeof( command ), "./reset.sh %d",
               sdb );
 
-    if( system( command ) )
+    if ( !WEXITSTATUS( system( command ) ) )
         strcpy( body, "Account disconnesso!" );
     else
         strcpy( body, "Account non connesso!" );
@@ -450,7 +479,7 @@ void cancel( int sdb, char *body ) {
     snprintf( command1, sizeof( command1 ), "./reset.sh %d",
               sdb );
 
-    if( system( command1 ) ) {
+    if( !WEXITSTATUS( system( command1 ) ) ) {
         // L'if verifica se l'utente era connesso prima di effettuare la
         // cancellazione dell'account.
         snprintf( command2, sizeof( command2 ), "./cancel.sh \"%s\" \"%s\"",
@@ -470,7 +499,7 @@ void search( char *body ) {
 
     snprintf( command, sizeof( command ), "./search.sh \"%s\"", name );
 
-    if ( system( command ) )
+    if ( !WEXITSTATUS( system( command ) ) )
         strcpy( body, "Film trovato" );
     else
         strcpy( body, "Film non trovato" );
@@ -482,7 +511,7 @@ int find( char *username, char *password ) {
 
     snprintf( command, sizeof( command ), "./find.sh \"%s\" \"%s\"",
               username, password );
-    return system( command );
+    return WEXITSTATUS( system( command ) );
 }
 
 int look( int sdb ) {
@@ -491,6 +520,6 @@ int look( int sdb ) {
 
      snprintf( command, sizeof( command ), "./look.sh %d",
               sdb );
-    return system( command );
+    return WEXITSTATUS( system( command ) );
 }
 
