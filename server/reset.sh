@@ -2,10 +2,7 @@
 
 # Il seguente script effettua una ricerca all'interno
 # del file connessi.dat in base all'identificativo
-# associato alla connessione. Lo script restituisce
-# un exit code pari a 0 se l'utente è stato disconnesso
-# e un exit code pari a 1 se l'utente non era connesso
-# prima di effettuare la disconnessione.
+# associato alla connessione, all'username e alla password.
 
 sda=$1
 line=1

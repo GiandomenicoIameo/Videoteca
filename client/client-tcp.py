@@ -24,25 +24,12 @@ def session( head, action ):
         date     = input( 'Inserisci data: ' )
 
         message = head + filmname + '\0' + number + '\0' + date + '\0'
-
-    elif action == 1: # Rimuovi dal carrello
+    elif action == 1: # Aggiungi al carrello
         filmname = input( 'Nome film: ' )
-        number   = input( 'Inserisci la quantità: ' )
-
-        path = "./remove.sh"
-        result = subprocess.run( [ "bash", path, filmname, number ], capture_output = "True", text = "True" )
-        print( result.stdout )
-
-        message = head + filmname + '\0' + number + '\0'
-    elif action == 2: # Aggiungi al carrello
+        message = head + filmname + '\0'
+    elif action == 2: # Rimuovi dal carrello
         filmname = input( 'Nome film: ' )
-        number   = input( 'Inserisci la quantità: ' )
-
-        path = "./add.sh"
-        result = subprocess.run( [ "bash", path, filmname, number ], capture_output = "True", text = "True" )
-        print( result.stdout )
-
-        message = head + filmname + '\0' + number + '\0'
+        message = head + filmname + '\0'
 
     return message
 
@@ -96,11 +83,11 @@ while True:
         message = head + body
         break
 
-    receive_message = send( client_socket, message )
-    print( 'Messaggio ricevuto dal server:', receive_message.decode() )
+    response = send( client_socket, message )
+    print( 'Messaggio ricevuto dal server:', response.decode() )
 
-receive_message = send( client_socket, message )
-print( 'Messaggio ricevuto dal server:', receive_message.decode() )
+response = send( client_socket, message )
+print( 'Messaggio ricevuto dal server:', response.decode() )
 
 client_socket.close()
 print( 'Connessione terminata' )

@@ -13,8 +13,9 @@ counter=1
 while read user passwd; do
     if [[ $username == $user ]] && [[ $password == $passwd ]]; then
         sed -i ${counter}d signed.dat
-        break
+        exit 0
     fi
     (( counter = counter + 1 ))
 done < signed.dat
 
+exit 1

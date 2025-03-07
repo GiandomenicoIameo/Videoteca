@@ -30,7 +30,7 @@ void wait( int *lock );
 void signal( int *lock );
 
 int request( int sdb, char *buffer, int *type, int *action, char **body );
-void response( int result, char *message, int *sdb );
+void response( int result, int type, int action, char *message, int *sdb );
 
 unsigned int checkmovie( char *filmname, char *number, char *date ); // controllo film
 void returned( int sdb, char *body ); // richiesta di restituzione
@@ -127,7 +127,7 @@ void *runner( void *sda ) {
 
         sem_wait( &semaphore );
         /* Sezione d'ingresso */
-        sum = sum + 1;  /* Sezione critica */
+        sum = sum + 1;
         /* Sezione di uscita */
         sem_post( &semaphore );
 
@@ -138,7 +138,7 @@ void *runner( void *sda ) {
         // chiamante modificando variabili nella funzione chiamante.
 
         result = request( sdb, buffer, &type, &action, &body );
-        response( result, body, &sdb );
+        response( result, type, action, body, &sdb );
 
         if ( result == RELEASE )
             break;
@@ -190,7 +190,9 @@ int request( int sdb, char *buffer, int *type, int *action, char **body ) {
     return result;
 }
 
-void response( int result, char *body, int *sdb ) {
+void response( int result, int type, int action, char *body, int *sdb ) {
+
+    // void assemble( char *destination, int type, int action, char *body );
 
     char message[ 1024 ];
     // Il server non ha compreso la richiesta del client e, in risposta, invia
@@ -203,6 +205,7 @@ void response( int result, char *body, int *sdb ) {
         strcpy( message, "200 OK: " );
 
     strcat( message, body );
+    // assemble( message, type, action, body );
     message[ strlen( message ) + 1 ] = '\0';
 
     if( write( *sdb, ( const char * )message, strlen( message ) ) < 0 ) {
@@ -308,26 +311,37 @@ void signup( int sdb, char *body ) {
     void extract( char *body, char *username, char *password );
     int find( char *username, char *password );
 
-    char username[ 20 ], password[ 20 ], command[ 100 ];
+    char username[ 20 ], password[ 20 ], command1[ 100 ], command2[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
+
+    snprintf( command1, sizeof( command1 ), "./look.sh %d", sdb );
+
+    if ( !WEXITSTATUS( system( command1 ) ) ) {
+        strcpy( body, "Devi prima disconnetterti" );
+        return;
+    }
 
     if ( !find( username, password ) )
         strcpy( body, "Account esistente!" );
     else {
-        snprintf( command, sizeof( command ), "echo \"%s %s\" >> signed.dat",
+        snprintf( command2, sizeof( command2 ), "echo \"%s %s\" >> signed.dat",
               username, password );
-        system( command );
+        system( command2 );
 
-        snprintf( command, sizeof( command ), "echo %d \"%s %s\" >> connessi.dat",
+        snprintf( command2, sizeof( command2 ), "echo %d \"%s %s\" >> connessi.dat",
               sdb, username, password );
-        system( command );
+        system( command2 );
 
         strcpy( body, "Account creato!" );
     }
 }
 
 int session( int sdb, int action, char *body ) {
+
+    int look( int sdb );
+    void tocart( int sdb, char *body );
+    void fromcart( int sdb, char *body );
 
     int result = 1;
 
@@ -336,8 +350,10 @@ int session( int sdb, int action, char *body ) {
             rented( sdb, body );
             break;
         case 1:
+            tocart( sdb, body );
             break;
         case 2:
+            fromcart( sdb, body );
             break;
         case 3:
             returned( sdb, body );
@@ -356,10 +372,12 @@ void takeout( char *body, char *filmname, char *number, char *date ) {
         *filmname = *body;
     *filmname = '\0';
 
-    body++;
-    for ( ; *body != '\0'; body++, number++ )
-        *number = *body;
-    *number = '\0';
+    if ( number ) {
+        body++;
+        for ( ; *body != '\0'; body++, number++ )
+            *number = *body;
+        *number = '\0';
+    }
 
     if ( date ) {
         body++;
@@ -394,7 +412,7 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
 
     // Per il momento il noleggio è basato solo sulla data di restituizione,
     // nome del film e quantità disponibile.
-
+    int look( int sdb );
     void takeout( char *body, char *filmname, char *number, char *date );
 
     int res;
@@ -411,6 +429,66 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
         strcpy( body, "Quantità non disponibile" );
     else
         strcpy( body, "Film non trovato" );
+}
+
+void tocart( int sdb, char *body ) {
+
+    void takeout( char *body, char *filmname, char *number, char *date );
+    int look( int sdb );
+
+    char filmname[ 40 ], temp[ 40 ], command[ 100 ];
+    takeout( body, filmname, NULL, NULL );
+
+    if ( look( sdb ) ) {
+        strcpy( body, "Non sei connesso!" );
+        return ;
+    }
+
+    strcpy( temp ,filmname );
+    search( temp );
+
+    if ( strcmp( temp, "Film trovato") ) {
+        strcpy( body, temp );
+        return;
+    }
+
+    snprintf( command, sizeof( command ), "./addcart.sh %d \"%s\"" ,
+                sdb, filmname );
+
+    if( system( command ) )
+        strcpy( body, "Articolo presente nel carrello" );
+    else
+        strcpy( body, "Articolo aggiunto al carrello" );
+}
+
+void fromcart( int sdb, char *body ) {
+
+    void takeout( char *body, char *filmname, char *number, char *date );
+    int look( int sdb );
+
+    char filmname[ 40 ], temp[ 40 ], command[ 100 ];
+    takeout( body, filmname, NULL, NULL );
+
+    if ( look( sdb ) ) {
+        strcpy( body, "Non sei connesso!" );
+        return ;
+    }
+
+    strcpy( temp ,filmname );
+    search( temp );
+
+    if ( strcmp( temp, "Film trovato") ) {
+        strcpy( body, temp );
+        return;
+    }
+
+    snprintf( command, sizeof( command ), "./fromcart.sh %d \"%s\"" ,
+                sdb, filmname );
+
+    if( system( command ) )
+        strcpy( body, "Articolo non presente nel carrello" );
+    else
+        strcpy( body, "Articolo rimosso dal carrello" );
 }
 
 void returned( int sdb, char *body ) {
@@ -473,18 +551,27 @@ void cancel( int sdb, char *body ) {
     // cancellare il suo account abbia effettuato in un precedente momento
     // l'accesso a quest'ultimo.
 
-    char username[ 20 ], password[ 20 ], command1[ 100 ], command2[ 100 ];
+    char username[ 20 ], password[ 20 ],
+            command1[ 100 ], command2[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
 
-    snprintf( command1, sizeof( command1 ), "./reset.sh %d",
-              sdb );
+    snprintf( command1, sizeof( command1 ), "./verify.sh %d \"%s\" \"%s\" ",
+              sdb, username, password );
 
-    if( !WEXITSTATUS( system( command1 ) ) ) {
+    if( WEXITSTATUS( system( command1 ) ) == 0 ) {
         // L'if verifica se l'utente era connesso prima di effettuare la
         // cancellazione dell'account.
         snprintf( command2, sizeof( command2 ), "./cancel.sh \"%s\" \"%s\"",
                   username, password );
+        system( command2 );
+
+        snprintf( command2, sizeof( command2 ), "./reset.sh %d",
+                  sdb );
+        system( command2 );
+
+        snprintf( command2, sizeof( command2 ), "./removecart.sh %d",
+                  sdb );
         system( command2 );
 
         strcpy( body, "Account cancellato!" );
