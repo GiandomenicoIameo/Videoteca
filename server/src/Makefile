@@ -6,12 +6,12 @@ LIB = ../lib/authentication.c ../lib/session.c ../lib/release.c \
 OBJ = $(LIB:.c=.o)
 
 # Target principale
-server.out:	$(OBJ)
-	$(CC) $(OPTIONS) -o server.out $(OBJ)
+server-tcp.out:	$(OBJ)
+	$(CC) $(OPTIONS) -o server-tcp.out $(OBJ)
 
 %.o:	%.c
 	$(CC) $(OPTIONS) -c $< -o $@
 
 clean:
-	rm $(OBJ) server.out
+	rm $(OBJ) server-tcp.out
 

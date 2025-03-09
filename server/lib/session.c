@@ -11,7 +11,7 @@ int session( int sdb, int action, char *body ) {
 
     switch( action ) {
         case 0:
-            rented( body );
+            rented( sdb, body );
             break;
         case 1:
             tocart( sdb, body );
@@ -20,7 +20,7 @@ int session( int sdb, int action, char *body ) {
             fromcart( sdb, body );
             break;
         case 3:
-            returned( body );
+            returned( sdb, body );
             break;
         default:
             result = -1;
@@ -72,30 +72,39 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
     return 3;
 }
 
-void rented( char *body ) {
+void rented( int sdb, char *body ) {
 
     // Per il momento il noleggio è basato solo sulla data di restituizione,
     // nome del film e quantità disponibile.
 
     int res;
-    char filmname[ 40 ], number[ 5 ], date[ 20 ];
+    char filmname[ 40 ], number[ 5 ], date[ 20 ], command[ 100 ];
 
-    /*
-     * Verificare prima che l'utente sia connesso
-     *
-     */
+    if ( look( sdb ) ) {
+        strcpy( body, "Non sei connesso!" );
+        return;
+    }
 
     takeout( body, filmname, number, date );
     res = checkmovie( filmname, number, date );
 
-    if ( !res )
-        strcpy( body, "Noleggio approvato" );
-    else if ( res == 1 )
-        strcpy( body, "Data non valida" );
-    else if ( res == 2 )
-        strcpy( body, "Quantità non disponibile" );
-    else
-        strcpy( body, "Film non trovato" );
+    switch( res ) {
+        case 0:
+            strcpy( body, "Noleggio approvato" );
+            snprintf( command, sizeof( command ),
+                "script/rent.sh \"%s\" %d" , filmname, atoi( number ) );
+            system( command );
+            break;
+        case 1:
+            strcpy( body, "Data non valida" );
+            break;
+        case 2:
+            strcpy( body, "Quantità non disponibile" );
+            break;
+        default:
+            strcpy( body, "Film non trovato" );
+            break;
+    }
 }
 
 void tocart( int sdb, char *body ) {
@@ -152,8 +161,26 @@ void fromcart( int sdb, char *body ) {
         strcpy( body, "Articolo rimosso dal carrello" );
 }
 
-void returned( char *body ) {
+void returned( int sdb, char *body ) {
 
-    char filmname[ 40 ], number[ 5 ];
+    char filmname[ 40 ], temp[ 40 ], number[ 5 ], command[ 100 ];
     takeout( body, filmname, number, NULL );
+
+    if ( look( sdb ) ) {
+        strcpy( body, "Non sei connesso!" );
+        return;
+    }
+
+    strcpy( temp, filmname );
+    search( temp );
+
+    if ( strcmp( temp, "Film trovato") )
+        strcpy( body, "Film non trovato" );
+    else {
+        strcpy( body, "Restituzione approvata" );
+
+        snprintf( command, sizeof( command ), "script/returned.sh \"%s\" %d" ,
+                filmname, atoi( number ) );
+        system( command );
+    }
 }

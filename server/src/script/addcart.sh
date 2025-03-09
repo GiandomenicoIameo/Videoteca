@@ -1,10 +1,10 @@
 #!/bin/bash
 
-client=$1
+sda=$1
 filmname=$2
 
-if ! [[ -e database/cart_$client ]]; then
-    touch database/cart_$client
+if ! [[ -e database/cart$sda ]]; then
+    touch database/cart$sda
 fi
 
 IFS=":"
@@ -12,7 +12,7 @@ while read film number; do
     if [[ $film == $filmname ]]; then
         exit 1
     fi
-done < database/cart_$client
+done < database/cart$sda
 
-echo $filmname >> database/cart_$client
+echo $filmname >> database/cart$sda
 exit 0

@@ -3,9 +3,8 @@
 filmname=$1
 number=$2
 
-while read line; do
-    num=$( echo $line | awk -F : '{ print $2 }' )
-    film=$( echo $line | awk -F : '{ print $1 }' )
+IFS=":"
+while read film num; do
 
     if [[ $filmname == $film ]]; then
         if (( $number <= $num )); then
