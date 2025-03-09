@@ -12,6 +12,6 @@ while read sd user pass; do
     if [[ $sda == $sd ]]; then
         exit 0
     fi
-done < connessi.dat
+done < database/connessi.dat
 
 exit 1

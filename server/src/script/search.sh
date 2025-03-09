@@ -10,6 +10,6 @@ while read filmname available; do
     if [[ $1 == $filmname ]]; then
         exit 0
     fi
-done < movies.dat
+done < database/movies.dat
 
 exit 1

@@ -15,6 +15,6 @@ while read line; do
         fi
     fi
 
-done < movies.dat
+done < database/movies.dat
 
 exit 2

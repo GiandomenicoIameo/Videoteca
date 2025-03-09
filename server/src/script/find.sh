@@ -14,6 +14,6 @@ while read user passwd; do
     if [[ $username == $user ]] && [[ $password == $passwd ]]; then
         exit 0
     fi
-done < signed.dat
+done < database/signed.dat
 
 exit 1
