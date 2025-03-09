@@ -35,6 +35,7 @@ void signal( int *lock );
 
 int request( int sdb, char *buffer, int *type, int *action, char **body );
 void response( int result, char *message, int *sdb );
+char *split( char *buffer, int *type, int *action );
 
 int main( void ) {
 
@@ -152,8 +153,6 @@ void signal( int *lock ) {
 
 int request( int sdb, char *buffer, int *type, int *action, char **body ) {
 
-    char *split( char *buffer, int *type, int *action );
-
     int result;
     *body = split( buffer, type, action );
 
@@ -182,8 +181,6 @@ int request( int sdb, char *buffer, int *type, int *action, char **body ) {
 }
 
 void response( int result, char *body, int *sdb ) {
-
-    // void assemble( char *destination, int type, int action, char *body );
 
     char message[ 1024 ];
     // Il server non ha compreso la richiesta del client e, in risposta, invia
