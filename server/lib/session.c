@@ -3,7 +3,20 @@
 
 #include <string.h> // Qui è presente il prototipo della funzione strcpy
 #include <stdlib.h> // Qui è stata definita la funzione system()
-#include <stdio.h> // Qui la funzione snprintf
+#include <stdio.h>  // Qui la funzione snprintf
+#include <pthread.h>
+
+// Scegliere altri nomi per le variabili.
+unsigned int rcounter = 0; // lettori del file movies.dat.
+
+// semaforo per assicurare che i lettori non accedino nello stesso
+// momento durante l'aggiornamento della variabile rcounter.
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// semaforo per assicurare la mutua esclusione per i processi scrittori
+// nel file movies.dat.
+pthread_mutex_t semwrite = PTHREAD_MUTEX_INITIALIZER; // Il mutex viene inizializzato
+// una sola volta dalla libreria POSIX
 
 int session( int sdb, int action, char *body ) {
 
@@ -58,7 +71,22 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
 
     snprintf( command1, sizeof( command1 ), "script/available.sh \"%s\" %d",
                 filmname, atoi( number ) );
+
+    // Processo lettore che accede al file movies.dat
+    pthread_mutex_lock( &mutex );
+    rcounter++;
+    if ( rcounter == 1 )
+         pthread_mutex_lock( &semwrite );
+    pthread_mutex_unlock( &mutex );
+
+    /* Sezione critica */
     status = WEXITSTATUS( system( command1 ) );
+
+    pthread_mutex_lock( &mutex );
+    rcounter--;
+    if ( rcounter == 0 )
+         pthread_mutex_lock( &semwrite );
+    pthread_mutex_unlock( &mutex );
 
     if( !status ) {
         snprintf( command2, sizeof( command2 ), "script/date.sh %s", date );
@@ -92,8 +120,12 @@ void rented( int sdb, char *body ) {
         case 0:
             strcpy( body, "Noleggio approvato" );
             snprintf( command, sizeof( command ),
-                "script/rent.sh \"%s\" %d" , filmname, atoi( number ) );
-            system( command );
+                      "script/rent.sh \"%s\" %d" , filmname, atoi( number ) );
+
+            // Processo scrittore che accede al file movies.dat
+            pthread_mutex_lock( &semwrite );
+            system( command ); /* Sezione critica */
+            pthread_mutex_unlock( &semwrite );
             break;
         case 1:
             strcpy( body, "Data non valida" );
@@ -110,6 +142,7 @@ void rented( int sdb, char *body ) {
 void tocart( int sdb, char *body ) {
 
     char filmname[ 40 ], temp[ 40 ], command[ 100 ];
+
     takeout( body, filmname, NULL, NULL );
 
     if ( look( sdb ) ) {
@@ -137,6 +170,7 @@ void tocart( int sdb, char *body ) {
 void fromcart( int sdb, char *body ) {
 
     char filmname[ 40 ], temp[ 40 ], command[ 100 ];
+
     takeout( body, filmname, NULL, NULL );
 
     if ( look( sdb ) ) {
@@ -181,6 +215,10 @@ void returned( int sdb, char *body ) {
 
         snprintf( command, sizeof( command ), "script/returned.sh \"%s\" %d" ,
                 filmname, atoi( number ) );
-        system( command );
+
+        // Processo scrittore che accede al file movies.dat
+        pthread_mutex_lock( &semwrite );
+        system( command );  /* Sezione critica */
+        pthread_mutex_unlock( &semwrite );
     }
 }

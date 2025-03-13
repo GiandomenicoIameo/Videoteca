@@ -13,11 +13,11 @@
                         // htons, htonl
 #include <unistd.h>     // Qui sono definite le primitive read e close
 #include <pthread.h>
-#include <semaphore.h>
 
 #include <sys/types.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <semaphore.h>
 
 #define domain sin_family
 #define port sin_port
@@ -67,7 +67,7 @@ int main( void ) {
         exit( 1 );
     }
 
-    sem_init( &semaphore, 0, 1 );
+    sem_init( &semaphore, 0, 1 ); // creazione del semaforo e inizializzato a 1
 
     while( 1 ) {
 
@@ -93,7 +93,7 @@ void *runner( void *sda ) {
     int sdb = dup( *( int * )sda );
     signal( &lock ); // Il thread figlio sblocca il lucchetto e permette al thread
                      // padre di utilizzare sda per la creazione di una nuova socket
-    char *body = NULL, buffer[ 1024 ];
+    char *body = NULL, buffer[ 1024 ], command[ 100 ];
     int result, type, action, res;
 
     while( 1 ) {
@@ -110,6 +110,13 @@ void *runner( void *sda ) {
             // all'altro estremo della connessione ha voluto chiudere la
             // connessione e quindi il file descriptor non potrà più
             // essere utilizzato per leggere dati.
+
+            // Se l'utente era loggato prima di chiudere la connessione,
+            // viene disconnesso.
+            snprintf( command, sizeof( command ),
+                    "script/logout.sh %d", sdb );
+            system( command );
+
             break;
         }
 

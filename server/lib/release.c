@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 int release( int sdb, int action, char *body ) {
 
@@ -47,10 +48,16 @@ void signout( int sdb, char *body ) {
 
 void cancel( int sdb, char *body ) {
 
+    extern unsigned int rccount;
+
+    extern pthread_mutex_t cmutex;
+    extern pthread_mutex_t csemwrite;
+
     // La funzione cancel poggia sull'assunto che l'utente che desidera
     // cancellare il suo account abbia effettuato in un precedente momento
     // l'accesso a quest'ultimo.
 
+    unsigned int res;
     char username[ 20 ], password[ 20 ],
             command1[ 100 ], command2[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
@@ -59,7 +66,21 @@ void cancel( int sdb, char *body ) {
     snprintf( command1, sizeof( command1 ), "script/verify.sh %d \"%s\" \"%s\" ",
               sdb, username, password );
 
-    if( WEXITSTATUS( system( command1 ) ) == 0 ) {
+    pthread_mutex_lock( &cmutex );
+    rccount++;
+    if ( rccount == 1 )
+        pthread_mutex_lock( &csemwrite );
+    pthread_mutex_unlock( &cmutex );
+
+    res = WEXITSTATUS( system( command1 ) ); /* Sezione critica */
+
+    pthread_mutex_lock( &cmutex );
+    rccount--;
+    if ( rccount == 0 )
+        pthread_mutex_unlock( &csemwrite );
+    pthread_mutex_unlock( &cmutex );
+
+    if( !res ) {
         // L'if verifica se l'utente era connesso prima di effettuare la
         // cancellazione dell'account.
         snprintf( command2, sizeof( command2 ), "script/cancel.sh %d \"%s\" \"%s\"",
