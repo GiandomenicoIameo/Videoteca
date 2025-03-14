@@ -16,8 +16,7 @@ void search( char *body ) {
 
     strcpy( name, body );
     snprintf( command, sizeof( command ), "script/search.sh \"%s\"", name );
-
-    // Processo lettore che accede al file movies.dat
+    // Processo lettore che accede al file movies.dat.
     pthread_mutex_lock( &mutex );
     rcounter++;
     if ( rcounter == 1 )

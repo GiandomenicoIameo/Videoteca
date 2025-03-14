@@ -52,8 +52,7 @@ int find( char *username, char *password ) {
 
     snprintf( command, sizeof( command ), "script/find.sh \"%s\" \"%s\"",
               username, password );
-
-    // Processo lettore
+    // Processo lettore che accede al file signed.dat
     pthread_mutex_lock( &smutex );
     rscount++;
     if ( rscount == 1 )

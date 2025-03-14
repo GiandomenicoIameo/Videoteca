@@ -16,7 +16,7 @@ counter=1
 while read user passwd; do
     if [[ $username == $user ]] && [[ $password == $passwd ]]; then
         sed -i ${counter}d database/signed.dat
-        script/logout.sh $sda; script/removecart.sh $sda
+        script/removecart.sh $sda
         exit 0
     fi
     (( counter = counter + 1 ))

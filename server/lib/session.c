@@ -8,15 +8,13 @@
 
 // Scegliere altri nomi per le variabili.
 unsigned int rcounter = 0; // lettori del file movies.dat.
-
 // semaforo per assicurare che i lettori non accedino nello stesso
 // momento durante l'aggiornamento della variabile rcounter.
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
 // semaforo per assicurare la mutua esclusione per i processi scrittori
 // nel file movies.dat.
-pthread_mutex_t semwrite = PTHREAD_MUTEX_INITIALIZER; // Il mutex viene inizializzato
-// una sola volta dalla libreria POSIX
+pthread_mutex_t semwrite = PTHREAD_MUTEX_INITIALIZER;
+// Il mutex viene inizializzato una sola volta dalla libreria POSIX.
 
 int session( int sdb, int action, char *body ) {
 
@@ -71,8 +69,7 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
 
     snprintf( command1, sizeof( command1 ), "script/available.sh \"%s\" %d",
                 filmname, atoi( number ) );
-
-    // Processo lettore che accede al file movies.dat
+    // Processo lettore che accede al file movies.dat.
     pthread_mutex_lock( &mutex );
     rcounter++;
     if ( rcounter == 1 )
@@ -121,8 +118,7 @@ void rented( int sdb, char *body ) {
             strcpy( body, "Noleggio approvato" );
             snprintf( command, sizeof( command ),
                       "script/rent.sh \"%s\" %d" , filmname, atoi( number ) );
-
-            // Processo scrittore che accede al file movies.dat
+            // Processo scrittore che accede al file movies.dat.
             pthread_mutex_lock( &semwrite );
             system( command ); /* Sezione critica */
             pthread_mutex_unlock( &semwrite );
@@ -215,8 +211,7 @@ void returned( int sdb, char *body ) {
 
         snprintf( command, sizeof( command ), "script/returned.sh \"%s\" %d" ,
                 filmname, atoi( number ) );
-
-        // Processo scrittore che accede al file movies.dat
+        // Processo scrittore che accede al file movies.dat.
         pthread_mutex_lock( &semwrite );
         system( command );  /* Sezione critica */
         pthread_mutex_unlock( &semwrite );

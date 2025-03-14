@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 int authentication( int sdb, int action, char *body ) {
 
@@ -29,10 +30,11 @@ int authentication( int sdb, int action, char *body ) {
 
 void signin( int sdb, char *body ) {
 
+    extern pthread_mutex_t csemwrite;
+
     char username[ 20 ], password[ 20 ], command[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
-
     // L'utente potrebbe accedere per conto di un altro, ma il seguente controllo
     // lo impedisce.
     if( look( sdb ) ) {
@@ -44,9 +46,12 @@ void signin( int sdb, char *body ) {
         // le credenziali passate come input alla funzione. Se l'utente è registrato
         // presso il server l'accesso gli sarà consentito.
             snprintf( command, sizeof( command ), "echo %d \"%s\" \"%s\" >> database/connessi.dat",
-              sdb, username, password );
+                    sdb, username, password );
+            // Processo lettore scrittore che accede al file connessi.dat.
+            pthread_mutex_lock( &csemwrite );
+            system( command ); /* Sezione critica */
+            pthread_mutex_unlock( &csemwrite );
 
-            system( command );
             strcpy( body, "Accesso consentito!" );
         }
         else
@@ -58,13 +63,36 @@ void signin( int sdb, char *body ) {
 
 void signup( int sdb, char *body ) {
 
+    extern unsigned int rccount;
+
+    extern pthread_mutex_t cmutex;
+    extern pthread_mutex_t csemwrite;
+
+    extern pthread_mutex_t ssemwrite;
+
+    unsigned int res;
     char username[ 20 ], password[ 20 ], command1[ 100 ], command2[ 100 ];
     // Estrazione dell'username e della password dal corpo del messaggio
     extract( body, username, password );
-
     snprintf( command1, sizeof( command1 ), "script/look.sh %d", sdb );
+
+    // Processo lettore che accede al file connessi.dat
+    pthread_mutex_lock( &cmutex );
+    rccount++;
+    if ( rccount == 1 )
+        pthread_mutex_lock( &csemwrite );
+    pthread_mutex_unlock( &cmutex );
+
+    res = WEXITSTATUS( system( command1 ) ); /* Sezione critica */
+
+    pthread_mutex_lock( &cmutex );
+    rccount--;
+    if ( rccount == 0 )
+        pthread_mutex_unlock( &csemwrite );
+    pthread_mutex_unlock( &cmutex );
+
     // Un utente non può creare un nuovo account se è già connesso
-    if ( !WEXITSTATUS( system( command1 ) ) ) {
+    if ( !res ) {
         strcpy( body, "Devi prima disconnetterti" );
         return;
     }
@@ -72,9 +100,22 @@ void signup( int sdb, char *body ) {
     if ( !find( username, password ) )
         strcpy( body, "Account esistente!" );
     else {
-        snprintf( command2, sizeof( command2 ), "script/signup.sh %d \"%s\" \"%s\"",
+        snprintf( command1, sizeof( command1 ), "echo %d \"%s\" \"%s\" >> database/connessi.dat",
               sdb, username, password );
-        system( command2 );
+
+        // Processo scrittore che accede al file connessi.dat
+        pthread_mutex_lock( &csemwrite );
+        system( command1 ); /* Sezione critica */
+        pthread_mutex_unlock( &csemwrite );
+
+        snprintf( command2, sizeof( command2 ), "echo \"%s\" \"%s\" >> database/signed.dat",
+                 username, password );
+
+        // Processo scrittore che accede al file signed.dat
+        pthread_mutex_lock( &ssemwrite );
+        system( command2 ); /* Sezione critica */
+        pthread_mutex_unlock( &ssemwrite );
+
         strcpy( body, "Account creato!" );
     }
 }

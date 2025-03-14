@@ -30,18 +30,45 @@ int release( int sdb, int action, char *body ) {
 
 void signout( int sdb, char *body ) {
 
+    extern unsigned int rccount;
+
+    extern pthread_mutex_t cmutex;
+    extern pthread_mutex_t csemwrite;
+
     // L'utente non può disconnetterne un altro perché
     // la procedura si basa solo sull'dentificativo
     // associato alla connessione che ha la funzione di collegare
     // ogni connessione a un account.
 
+    unsigned int res;
     char command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/logout.sh %d",
-              sdb );
+    snprintf( command, sizeof( command ), "script/look.sh %d", sdb );
+    // Processo lettore che accede al file connessi.dat
+    pthread_mutex_lock( &cmutex );
+    rccount++;
+    if ( rccount == 1 )
+        pthread_mutex_lock( &csemwrite );
+    pthread_mutex_unlock( &cmutex );
 
-    if ( !WEXITSTATUS( system( command ) ) )
-        strcpy( body, "Account disconnesso!" );
+    res = WEXITSTATUS( system( command ) ); /* Sezione critica */
+
+    pthread_mutex_lock( &cmutex );
+    rccount--;
+    if( rccount == 0 )
+        pthread_mutex_unlock( &csemwrite );
+    pthread_mutex_unlock( &cmutex );
+
+    if ( !res ) {
+        snprintf( command, sizeof( command ), "sed -i '/^%d/d' database/connessi.dat",
+                  sdb );
+        // Processo scrittore che accede al file connessi.dat
+        pthread_mutex_lock( &csemwrite );
+        system( command ); /* Sezione critica */
+        pthread_mutex_unlock( &csemwrite );
+
+        strcpy( body, "Account disconnesso" );
+    }
     else
         strcpy( body, "Account non connesso!" );
 }
@@ -49,9 +76,13 @@ void signout( int sdb, char *body ) {
 void cancel( int sdb, char *body ) {
 
     extern unsigned int rccount;
+    extern unsigned int rscount;
 
     extern pthread_mutex_t cmutex;
     extern pthread_mutex_t csemwrite;
+
+    extern pthread_mutex_t smutex;
+    extern pthread_mutex_t ssemwrite;
 
     // La funzione cancel poggia sull'assunto che l'utente che desidera
     // cancellare il suo account abbia effettuato in un precedente momento
@@ -65,7 +96,7 @@ void cancel( int sdb, char *body ) {
 
     snprintf( command1, sizeof( command1 ), "script/verify.sh %d \"%s\" \"%s\" ",
               sdb, username, password );
-
+    // Processo lettore che accede al file conness.dat
     pthread_mutex_lock( &cmutex );
     rccount++;
     if ( rccount == 1 )
@@ -83,9 +114,34 @@ void cancel( int sdb, char *body ) {
     if( !res ) {
         // L'if verifica se l'utente era connesso prima di effettuare la
         // cancellazione dell'account.
-        snprintf( command2, sizeof( command2 ), "script/cancel.sh %d \"%s\" \"%s\"",
-                  sdb, username, password );
-        system( command2 );
+        snprintf( command1, sizeof( command1 ), "script/find.sh \"%s\" \"%s\"",
+                  username, password );
+        // Processo lettore che accede al file signed.dat
+        pthread_mutex_lock( &smutex );
+        rscount++;
+        if ( rscount == 1 )
+            pthread_mutex_lock( &ssemwrite );
+        pthread_mutex_unlock( &smutex );
+
+        res = system( command1 ); /* Sezione critica */
+
+        pthread_mutex_lock( &smutex );
+        rscount--;
+        if ( rscount == 0 )
+            pthread_mutex_unlock( &ssemwrite );
+        pthread_mutex_unlock( &smutex );
+
+        if ( !res ) {
+            snprintf( command1, sizeof( command1 ), "sed -i '/%s %s/d' database/signed.dat",
+                    username, password );
+            // Processo scrittore che accede al file signed.dat
+            pthread_mutex_lock( &ssemwrite );
+            res = system( command1 );
+            pthread_mutex_unlock( &ssemwrite );
+
+            snprintf( command2, sizeof( command2 ), "script/removecart.sh %d", sdb );
+            system( command2 );
+        }
 
         strcpy( body, "Account cancellato!" );
     }
