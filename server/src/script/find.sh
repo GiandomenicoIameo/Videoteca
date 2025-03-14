@@ -9,11 +9,20 @@
 
 username=$1
 password=$2
+filename=$3
 
-while read user passwd; do
-    if [[ $username == $user ]] && [[ $password == $passwd ]]; then
-        exit 0
-    fi
-done < database/signed.dat
+if [[ $filename == "signed.dat" ]]; then
+    while read user passwd; do
+        if [[ $username == $user ]] && [[ $password == $passwd ]]; then
+            exit 0
+        fi
+    done < $filename
+elif [[ $filename == "connessi.dat" ]]; then
+    while read sdb user passwd; do
+        if [[ $username == $user ]] && [[ $password == $passwd ]]; then
+            exit 0
+        fi
+    done < $filename
+fi
 
 exit 1

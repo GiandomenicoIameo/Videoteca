@@ -97,9 +97,6 @@ void *runner( void *sda ) {
     char *body = NULL, buffer[ 1024 ], command[ 100 ];
     int result, type, action, res;
 
-    extern unsigned int rccount;
-
-    extern pthread_mutex_t cmutex;
     extern pthread_mutex_t csemwrite;
 
     while( 1 ) {
@@ -119,23 +116,7 @@ void *runner( void *sda ) {
 
             // Se l'utente era loggato prima di chiudere la connessione,
             // viene disconnesso.
-            snprintf( command, sizeof( command ), "script/look.sh %d", sdb );
-            // Processo lettore che accede al file connessi.dat.
-            pthread_mutex_lock( &cmutex );
-            rccount++;
-            if ( rccount == 1 )
-                pthread_mutex_lock( &csemwrite );
-            pthread_mutex_unlock( &cmutex );
-
-            res = system( command ); /* Sezione critica */
-
-            pthread_mutex_lock( &cmutex );
-            rccount--;
-            if ( rccount == 0 )
-                pthread_mutex_unlock( &csemwrite );
-            pthread_mutex_unlock( &cmutex );
-
-            if ( !res ) {
+            if ( !look( sdb ) ) {
                 snprintf( command, sizeof( command ),
                           "sed -i '/^%d/d' database/connessi.dat", sdb );
                 // Processo scrittore che accede al file connessi.dat.

@@ -45,13 +45,13 @@ int look( int sdb ) {
     return res;
 }
 
-int find( char *username, char *password ) {
+int find( char *username, char *password, char *filename ) {
 
     unsigned int res;
     char command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/find.sh \"%s\" \"%s\"",
-              username, password );
+    snprintf( command, sizeof( command ), "script/find.sh \"%s\" \"%s\" \"%s\"",
+              username, password, filename );
     // Processo lettore che accede al file signed.dat
     pthread_mutex_lock( &smutex );
     rscount++;
