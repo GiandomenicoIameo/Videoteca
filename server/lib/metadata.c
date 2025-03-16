@@ -20,54 +20,39 @@ pthread_mutex_t smutex = PTHREAD_MUTEX_INITIALIZER;
 // che accedono al file signed.dat.
 pthread_mutex_t ssemwrite = PTHREAD_MUTEX_INITIALIZER;
 
-int look( int sdb ) {
+void writer( char *command, pthread_mutex_t mutex ) {
 
-    unsigned int res;
-    char command[ 100 ];
-
-    snprintf( command, sizeof( command ), "script/look.sh %d",
-              sdb );
-    // Processo lettore che accede al file connessi.dat
-    pthread_mutex_lock( &cmutex );
-    rccount++;
-    if ( rccount == 1 )
-        pthread_mutex_lock( &csemwrite );
-    pthread_mutex_unlock( &cmutex );
-
-    res = WEXITSTATUS( system( command ) ); /* Sezione critica */
-
-    pthread_mutex_lock( &cmutex );
-    rccount--;
-    if ( rccount == 0 )
-        pthread_mutex_unlock( &csemwrite );
-    pthread_mutex_unlock( &cmutex );
-
-    return res;
+    pthread_mutex_lock( &mutex );
+    system( command ); /* Sezione critica */
+    pthread_mutex_unlock( &mutex );
 }
 
-int find( char *username, char *password, char *filename ) {
+unsigned char reader( char *command, pthread_mutex_t mutex, pthread_mutex_t write, unsigned int readers ) {
+    unsigned char res;
 
-    unsigned int res;
-    char command[ 100 ];
-
-    snprintf( command, sizeof( command ), "script/find.sh \"%s\" \"%s\" \"%s\"",
-              username, password, filename );
-    // Processo lettore che accede al file signed.dat
-    pthread_mutex_lock( &smutex );
-    rscount++;
-    if ( rscount == 1 )
-        pthread_mutex_lock( &ssemwrite );
-    pthread_mutex_unlock( &smutex );
+    pthread_mutex_lock( &mutex );
+    readers++;
+    if ( readers == 1 )
+        pthread_mutex_lock( &write );
+    pthread_mutex_unlock( &mutex );
 
     res = WEXITSTATUS( system( command ) ); /* Sezione critica */
 
-    pthread_mutex_lock( &smutex );
-    rscount--;
-    if ( rscount == 0 )
-        pthread_mutex_unlock( &ssemwrite );
-    pthread_mutex_unlock( &smutex );
+    pthread_mutex_lock( &mutex );
+    readers--;
+    if ( readers == 0 )
+        pthread_mutex_unlock( &write );
+    pthread_mutex_unlock( &mutex );
 
-    return res;
+    return 1 - res;
+}
+
+int connected( int sdb ) {
+
+    char command[ 100 ];
+    snprintf( command, sizeof( command ), "script/connected.sh %d", sdb );
+    // Processo lettore che accede al file connessi.dat
+    return reader( command, cmutex, csemwrite, rccount );
 }
 
 void extract( char *body, char *username, char *password ) {

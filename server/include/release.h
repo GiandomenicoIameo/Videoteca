@@ -7,5 +7,3 @@
 int release( int sdb, int action, char *body );
 void cancel( int sdb, char *body );
 void signout( int sdb, char *body );
-unsigned int verify( int sdb, char *username, char *password );
-

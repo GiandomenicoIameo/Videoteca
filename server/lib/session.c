@@ -25,10 +25,10 @@ int session( int sdb, int action, char *body ) {
             rented( sdb, body );
             break;
         case 1:
-            tocart( sdb, body );
+            additem( sdb, body );
             break;
         case 2:
-            fromcart( sdb, body );
+            delitem( sdb, body );
             break;
         case 3:
             returned( sdb, body );
@@ -64,31 +64,18 @@ void takeout( char *body, char *filmname, char *number, char *date ) {
 
 unsigned int checkmovie( char *filmname, char *number, char *date ) {
 
-    int status;
-    char command1[ 100 ], command2[ 100 ];
+    unsigned char status;
+    char command[ 100 ];
 
-    snprintf( command1, sizeof( command1 ), "script/available.sh \"%s\" %d",
+    snprintf( command, sizeof( command ), "script/available.sh \"%s\" %d",
                 filmname, atoi( number ) );
     // Processo lettore che accede al file movies.dat.
-    pthread_mutex_lock( &mutex );
-    rcounter++;
-    if ( rcounter == 1 )
-         pthread_mutex_lock( &semwrite );
-    pthread_mutex_unlock( &mutex );
-
-    /* Sezione critica */
-    status = WEXITSTATUS( system( command1 ) );
-
-    pthread_mutex_lock( &mutex );
-    rcounter--;
-    if ( rcounter == 0 )
-         pthread_mutex_lock( &semwrite );
-    pthread_mutex_unlock( &mutex );
+    status = reader( command, mutex, semwrite, rcounter );
 
     if( !status ) {
-        snprintf( command2, sizeof( command2 ), "script/date.sh %s", date );
+        snprintf( command, sizeof( command ), "script/date.sh %s", date );
 
-        if ( !WEXITSTATUS( system( command2 ) ) )
+        if ( !WEXITSTATUS( system( command ) ) )
             return 0;
         return 1;
     }
@@ -105,9 +92,8 @@ void rented( int sdb, char *body ) {
     int res;
     char filmname[ 40 ], number[ 5 ], date[ 20 ], command[ 100 ];
 
-    if ( look( sdb ) ) {
-        strcpy( body, "Non sei connesso!" );
-        return;
+    if ( !connected( sdb ) ) {
+        strcpy( body, "Non sei connesso!" ); return;
     }
 
     takeout( body, filmname, number, date );
@@ -115,13 +101,11 @@ void rented( int sdb, char *body ) {
 
     switch( res ) {
         case 0:
-            strcpy( body, "Noleggio approvato" );
             snprintf( command, sizeof( command ),
                       "script/rent.sh \"%s\" %d" , filmname, atoi( number ) );
             // Processo scrittore che accede al file movies.dat.
-            pthread_mutex_lock( &semwrite );
-            system( command ); /* Sezione critica */
-            pthread_mutex_unlock( &semwrite );
+            writer( command, semwrite );
+            strcpy( body, "Noleggio approvato" );
             break;
         case 1:
             strcpy( body, "Data non valida" );
@@ -135,15 +119,14 @@ void rented( int sdb, char *body ) {
     }
 }
 
-void tocart( int sdb, char *body ) {
+void additem( int sdb, char *body ) {
 
     char filmname[ 40 ], temp[ 40 ], command[ 100 ];
 
     takeout( body, filmname, NULL, NULL );
 
-    if ( look( sdb ) ) {
-        strcpy( body, "Non sei connesso!" );
-        return ;
+    if ( !connected( sdb ) ) {
+        strcpy( body, "Non sei connesso!" ); return;
     }
 
     strcpy( temp ,filmname );
@@ -156,22 +139,20 @@ void tocart( int sdb, char *body ) {
 
     snprintf( command, sizeof( command ), "script/addcart.sh %d \"%s\"" ,
                 sdb, filmname );
-
     if( system( command ) )
         strcpy( body, "Articolo presente nel carrello" );
     else
         strcpy( body, "Articolo aggiunto al carrello" );
 }
 
-void fromcart( int sdb, char *body ) {
+void delitem( int sdb, char *body ) {
 
     char filmname[ 40 ], temp[ 40 ], command[ 100 ];
 
     takeout( body, filmname, NULL, NULL );
 
-    if ( look( sdb ) ) {
-        strcpy( body, "Non sei connesso!" );
-        return ;
+    if ( !connected( sdb ) ) {
+        strcpy( body, "Non sei connesso!" ); return ;
     }
 
     strcpy( temp ,filmname );
@@ -196,7 +177,7 @@ void returned( int sdb, char *body ) {
     char filmname[ 40 ], temp[ 40 ], number[ 5 ], command[ 100 ];
     takeout( body, filmname, number, NULL );
 
-    if ( look( sdb ) ) {
+    if ( !connected( sdb ) ) {
         strcpy( body, "Non sei connesso!" );
         return;
     }
@@ -208,12 +189,9 @@ void returned( int sdb, char *body ) {
         strcpy( body, "Film non trovato" );
     else {
         strcpy( body, "Restituzione approvata" );
-
         snprintf( command, sizeof( command ), "script/returned.sh \"%s\" %d" ,
                 filmname, atoi( number ) );
         // Processo scrittore che accede al file movies.dat.
-        pthread_mutex_lock( &semwrite );
-        system( command );  /* Sezione critica */
-        pthread_mutex_unlock( &semwrite );
+        writer( command, semwrite );
     }
 }

@@ -7,10 +7,6 @@
 
 int authentication( int sdb, int action, char *body ) {
 
-    // I prototipi per le funzioni signin() e signup() sono inclusi
-    // nel corpo della funzione authentication perché è l'unica
-    // funzione che invoca cancel() e signout().
-
     int result = 0;
 
     switch( action ) {
@@ -30,71 +26,113 @@ int authentication( int sdb, int action, char *body ) {
 
 void signin( int sdb, char *body ) {
 
+    unsigned char enabled( char *username );
+    unsigned char recorded( char *username, char *password );
+
     extern pthread_mutex_t csemwrite;
 
-    char username[ 20 ], password[ 20 ], command[ 100 ];
-    // Estrazione dell'username e della password dal corpo del messaggio
-    extract( body, username, password );
-    // L'utente potrebbe accedere per conto di un altro, ma il seguente controllo
-    // lo impedisce.
-    if( find( username, password, "database/connessi.dat" ) ) {
-        // Il controllo inizia con la funzione find() che verifica se l'utente
-        // è attualmente connesso. La verifica viene effettuata in base
-        // all'username e alla password.
-        if ( !find( username, password, "database/signed.dat" ) ) {
-        // Se l'utente non era connesso viene effettuato un controllo per verificare
-        // le credenziali passate come input alla funzione. Se l'utente è registrato
-        // presso il server l'accesso gli sarà consentito.
-            snprintf( command, sizeof( command ), "echo %d \"%s\" \"%s\" >> database/connessi.dat",
-                    sdb, username, password );
-            // Processo lettore scrittore che accede al file connessi.dat.
-            pthread_mutex_lock( &csemwrite );
-            system( command ); /* Sezione critica */
-            pthread_mutex_unlock( &csemwrite );
+    char username[ 20 ], command[ 100 ],
+         password[ 20 ];
 
-            strcpy( body, "Accesso consentito!" );
-        }
-        else
-            strcpy( body, "Accesso negato!" );
+    // Estrazione dell'username e della password dal corpo del messaggio.
+    extract( body, username, password );
+    if ( !connected( sdb ) ) {
+        // Se il precedente test non fallisce allora si tratterà sicuramente
+        // di un client che sta tendando l'accesso a un account per la prima
+        // volta.
+        if( !enabled( username ) ) {
+            // Il precedente controllo verifica se l'username ricevuto dal client è associato già
+            // a un account correntemente connesso presso il server.
+            if ( recorded( username, password ) ) {
+                // Quest'ultimo controllo verifica se esiste un account registrato presso il
+                // server identificato dalla coppia ( username, password ) specificata dal client.
+                snprintf( command, sizeof( command ), "echo %d:\"%s\":\"%s\" >> database/connessi.dat",
+                        sdb, username, password );
+                // Processo lettore scrittore che accede al file connessi.dat.
+                writer( command, csemwrite );
+                strcpy( body, "Accesso consentito!" );
+            } else
+                strcpy( body, "Accesso negato!" );
+        } else
+            sprintf( body, "L'utente %s risulta già connesso!", username );
     }
     else
-        strcpy( body, "Opzione non consentita!" );
+        strcpy( body, "Sei già connesso!" );
 }
 
 void signup( int sdb, char *body ) {
 
+    unsigned char unique( char *username );
+
     extern pthread_mutex_t csemwrite;
     extern pthread_mutex_t ssemwrite;
 
-    char username[ 20 ], password[ 20 ], command1[ 100 ], command2[ 100 ];
-    // Estrazione dell'username e della password dal corpo del messaggio
+    char username[ 20 ], command[ 100 ],
+         password[ 20 ];
+
+    // Un utente connesso non può creare un nuovo account.
+    if ( connected( sdb ) ) {
+        strcpy( body, "Sei già connesso!" ); return;
+    }
+    // Estrazione dell'username e della password dal corpo del messaggio.
     extract( body, username, password );
-
-    // Un utente non può creare un nuovo account se è già connesso.
-    if ( !look( sdb ) ) {
-        strcpy( body, "Devi prima disconnetterti" );
-        return;
+    // Un nuovo utente deve scegliere un username univoco. Se le
+    // password sono uguali, l'elemento che permette di distinguere
+    // un account da un altro è il nome utente.
+    if ( !unique( username ) ) {
+        strcpy( body, "Username già in uso!" ); return;
     }
-
-    if ( !find( username, password, "database/connessi.dat" ) )
-        strcpy( body, "Account esistente!" );
-    else {
-        snprintf( command1, sizeof( command1 ), "echo %d \"%s\" \"%s\" >> database/connessi.dat",
+    snprintf( command, sizeof( command ), "echo %d:\"%s\":\"%s\" >> database/connessi.dat",
               sdb, username, password );
+    // Processo scrittore che accede al file connessi.dat.
+    writer( command, csemwrite );
+    snprintf( command, sizeof( command ), "echo \"%s\":\"%s\" >> database/signed.dat",
+                username, password );
+    // Processo scrittore che accede al file signed.dat
+    writer( command, ssemwrite );
+    strcpy( body, "Account creato!" );
+}
 
-        // Processo scrittore che accede al file connessi.dat
-        pthread_mutex_lock( &csemwrite );
-        system( command1 ); /* Sezione critica */
-        pthread_mutex_unlock( &csemwrite );
+unsigned char enabled( char *username ) {
 
-        snprintf( command2, sizeof( command2 ), "echo \"%s\" \"%s\" >> database/signed.dat",
-                 username, password );
+    extern pthread_mutex_t cmutex;
+    extern pthread_mutex_t csemwrite;
 
-        // Processo scrittore che accede al file signed.dat
-        pthread_mutex_lock( &ssemwrite );
-        system( command2 ); /* Sezione critica */
-        pthread_mutex_unlock( &ssemwrite );
+    extern unsigned int rccount;
 
-        strcpy( body, "Account creato!" );
-    }
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ), "script/enabled.sh \"%s\"",
+             username );
+    // Processo lettore che accede al file connessi.dat
+    return reader( command, cmutex, csemwrite, rccount );
+}
+
+unsigned char recorded( char *username, char *password ) {
+
+    extern pthread_mutex_t smutex;
+    extern pthread_mutex_t ssemwrite;
+
+    extern unsigned int rscount;
+
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ), "script/recorded.sh \"%s\" \"%s\"",
+             username, password );
+    // Processo lettore che accede al file signed.dat.
+    return reader( command, smutex, ssemwrite, rscount );
+}
+
+unsigned char unique( char *username ) {
+
+    extern pthread_mutex_t smutex;
+    extern pthread_mutex_t ssemwrite;
+
+    extern unsigned int rscount;
+
+    char command[ 100 ];
+    snprintf( command, sizeof( command ), "script/unique.sh \"%s\"",
+              username );
+    // Processo lettore che accede al file signed.dat
+    return reader( command, smutex, ssemwrite, rscount );
 }

@@ -92,8 +92,11 @@ int main( void ) {
 void *runner( void *sda ) {
 
     int sdb = dup( *( int * )sda );
-    signal( &lock ); // Il thread figlio sblocca il lucchetto e permette al thread
-                     // padre di utilizzare sda per la creazione di una nuova socket
+    signal( &lock );
+
+    // Il thread figlio sblocca il lucchetto e permette al thread
+    // padre di utilizzare sda per la creazione di una nuova socket
+
     char *body = NULL, buffer[ 1024 ], command[ 100 ];
     int result, type, action, res;
 
@@ -116,13 +119,11 @@ void *runner( void *sda ) {
 
             // Se l'utente era loggato prima di chiudere la connessione,
             // viene disconnesso.
-            if ( !look( sdb ) ) {
+            if ( connected( sdb ) ) {
                 snprintf( command, sizeof( command ),
                           "sed -i '/^%d/d' database/connessi.dat", sdb );
                 // Processo scrittore che accede al file connessi.dat.
-                pthread_mutex_lock( &csemwrite );
-                system( command );
-                pthread_mutex_unlock( &csemwrite );
+                writer( command, csemwrite );
             }
             break;
         }
@@ -200,11 +201,11 @@ void response( int result, char *body, int *sdb ) {
     // Il server non ha compreso la richiesta del client e, in risposta, invia
     // un codice corrispondende a tale evento.
     if ( result < 0 )
-        strcpy( message, "404 Bad Request " );
+        strcpy( message, "404 Bad Request:" );
     // Il server ha compreso e accettato con successo la richiesta del client
     // e, in risposta, invia una conferma dell'avvenuta comprensione.
     else
-        strcpy( message, "200 OK: " );
+        strcpy( message, "200 OK:" );
 
     strcat( message, body );
     // assemble( message, type, action, body );

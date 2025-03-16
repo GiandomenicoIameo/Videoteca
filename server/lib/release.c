@@ -30,7 +30,7 @@ int release( int sdb, int action, char *body ) {
 
 void signout( int sdb, char *body ) {
 
-    extern pthread_mutex_t csemwrite;
+    extern pthread_mutex_t ssemwrite;
 
     // L'utente non può disconnetterne un altro perché
     // la procedura si basa solo sull'dentificativo
@@ -39,15 +39,12 @@ void signout( int sdb, char *body ) {
 
     char command[ 100 ];
 
-    if ( !look( sdb ) ) {
-        snprintf( command, sizeof( command ), "sed -i '/^%d/d' database/connessi.dat",
+    if ( connected( sdb ) ) {
+        snprintf( command, sizeof( command ), "script/disconnect.sh %d",
                   sdb );
-        // Processo scrittore che accede al file connessi.dat
-        pthread_mutex_lock( &csemwrite );
-        system( command ); /* Sezione critica */
-        pthread_mutex_unlock( &csemwrite );
-
-        strcpy( body, "Account disconnesso" );
+        // Processo scrittore che accede al file signed.dat
+        writer( command, ssemwrite );
+        strcpy( body, "Account disconnesso!" );
     }
     else
         strcpy( body, "Account non connesso!" );
@@ -55,63 +52,49 @@ void signout( int sdb, char *body ) {
 
 void cancel( int sdb, char *body ) {
 
+    unsigned char associated( char *username, char *password );
+
     extern pthread_mutex_t ssemwrite;
+    extern pthread_mutex_t csemwrite;
 
     // La funzione cancel poggia sull'assunto che l'utente che desidera
     // cancellare il suo account abbia effettuato in un precedente momento
     // l'accesso a quest'ultimo.
 
-    char username[ 20 ], password[ 20 ],
-            command1[ 100 ], command2[ 100 ];
-    // Estrazione dell'username e della password dal corpo del messaggio
+    char username[ 20 ], command[ 100 ],
+         password[ 20 ];
+    // Estrazione dell'username e della password dal corpo del messaggio.
     extract( body, username, password );
-
-    if( !verify( sdb, username, password ) ) {
-        // L'if verifica se l'utente era connesso prima di effettuare la
-        // cancellazione dell'account.
-        snprintf( command1, sizeof( command1 ), "sed -i '/%s %s/d' database/signed.dat",
-                username, password );
-        // Processo scrittore che accede al file signed.dat
-        pthread_mutex_lock( &ssemwrite );
-        system( command1 );
-        pthread_mutex_unlock( &ssemwrite );
-
-        snprintf( command2, sizeof( command2 ), "script/removecart.sh %d", sdb );
-        system( command2 );
+    if ( connected( sdb ) && associated( username, password ) ) {
+        snprintf( command, sizeof( command ), "sed -i '/%s:%s/d' database/signed.dat",
+                    username, password );
+        // Processo scrittore che accede al file signed.dat.
+        writer( command, ssemwrite );
+        snprintf( command, sizeof( command ), "sed -i '/^%d/d' database/connessi.dat",
+                    sdb );
+        // Processo scrittore che accede al file connessi.dat.
+        writer( command, csemwrite );
+        snprintf( command, sizeof( command ), "script/removecart.sh %d", sdb );
+        system( command );
 
         strcpy( body, "Account cancellato!" );
-    }
-    else
-        strcpy( body,"Cancellazione Account fallita!" );
-        // Qui è necessario inserire un ciclo
+    } else
+        // Se il client non è connesso oppure l'username e la password dichiarati non
+        // corrispondono all'ID della sessione, la cancellazione dell'account sarà negata.
+        strcpy( body, "Cancellazione Account fallita!" );
 }
 
-unsigned int verify( int sdb, char *username, char *password ) {
+unsigned char associated( char *username, char *password ) {
 
-    extern unsigned int rccount;
+    extern pthread_mutex_t smutex;
+    extern pthread_mutex_t ssemwrite;
 
-    extern pthread_mutex_t cmutex;
-    extern pthread_mutex_t csemwrite;
+    extern unsigned int rscount;
 
-    unsigned int res;
     char command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/verify.sh %d \"%s\" \"%s\" ",
-            sdb, username, password );
-    // Processo lettore che accede al file connessi.dat
-    pthread_mutex_lock( &cmutex );
-    rccount++;
-    if ( rccount == 1 )
-        pthread_mutex_lock( &csemwrite );
-    pthread_mutex_unlock( &cmutex );
-
-    res = WEXITSTATUS( system( command ) ); /* Sezione critica */
-
-    pthread_mutex_lock( &cmutex );
-    rccount--;
-    if ( rccount == 0 )
-        pthread_mutex_unlock( &csemwrite );
-    pthread_mutex_unlock( &cmutex );
-
-    return res;
+    snprintf( command, sizeof( command ), "script/associated.sh \"%s\" \"%s\"",
+             username, password );
+    // Processo lettore che accede al file signed.da
+    return reader( command, smutex, ssemwrite, rscount );
 }
