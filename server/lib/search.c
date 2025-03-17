@@ -7,30 +7,30 @@
 
 void search( char *body ) {
 
-    extern unsigned int rcounter;
-    extern pthread_mutex_t mutex;
-    extern pthread_mutex_t semwrite;
+    extern unsigned int rdm;
+    extern pthread_mutex_t mtm;
+    extern pthread_mutex_t wrtm;
 
     unsigned int res;
     char name[ 40 ], command[ 100 ];
 
     strcpy( name, body );
-    snprintf( command, sizeof( command ), "script/search.sh \"%s\"", name );
+    snprintf( command, sizeof( command ), "script/search/search.sh \"%s\"", name );
     // Processo lettore che accede al file movies.dat.
-    pthread_mutex_lock( &mutex );
-    rcounter++;
-    if ( rcounter == 1 )
-         pthread_mutex_lock( &semwrite );
-    pthread_mutex_unlock( &mutex );
+    pthread_mutex_lock( &mtm );
+    rdm = rdm + 1;
+    if ( rdm == 1 )
+         pthread_mutex_lock( &wrtm );
+    pthread_mutex_unlock( &mtm );
 
     /* Sesione critica */
     res = WEXITSTATUS( system( command ) );
 
-    pthread_mutex_lock( &mutex );
-    rcounter--;
-    if ( rcounter == 0 )
-         pthread_mutex_unlock( &semwrite );
-    pthread_mutex_unlock( &mutex );
+    pthread_mutex_lock( &mtm );
+    rdm = rdm - 1;
+    if ( rdm == 0 )
+         pthread_mutex_unlock( &wrtm );
+    pthread_mutex_unlock( &mtm );
 
     if ( !res )
         strcpy( body, "Film trovato" );

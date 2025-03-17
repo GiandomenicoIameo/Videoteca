@@ -7,37 +7,45 @@
 #include <pthread.h>
 
 // Scegliere altri nomi per le variabili.
-unsigned int rcounter = 0; // lettori del file movies.dat.
+unsigned int rdm = 0; // lettori del file movies.dat.
 // semaforo per assicurare che i lettori non accedino nello stesso
 // momento durante l'aggiornamento della variabile rcounter.
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mtm = PTHREAD_MUTEX_INITIALIZER;
 // semaforo per assicurare la mutua esclusione per i processi scrittori
 // nel file movies.dat.
-pthread_mutex_t semwrite = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t wrtm = PTHREAD_MUTEX_INITIALIZER;
 // Il mutex viene inizializzato una sola volta dalla libreria POSIX.
 
 int session( int sdb, int action, char *body ) {
 
+    // Ogni funzione nel costrutto switch poggia sull'assunto
+    // che il client che desidera effettuare le operazioni di sessione
+    // abbia effettuato in un precedente momento la connessione
+    // all'account.
+
     int result = 1;
 
-    switch( action ) {
-        case 0:
-            rented( sdb, body );
-            break;
-        case 1:
-            additem( sdb, body );
-            break;
-        case 2:
-            delitem( sdb, body );
-            break;
-        case 3:
-            returned( sdb, body );
-            break;
-        default:
-            result = -1;
-            break;
+    if ( !connected( sdb ) ) {
+            strcpy( body, "Non sei connesso!" );
+    } else {
+            switch( action ) {
+                    case 0:
+                            rented( body );
+                            break;
+                    case 1:
+                            additem( sdb, body );
+                            break;
+                    case 2:
+                            delitem( sdb, body );
+                            break;
+                    case 3:
+                            returned( body );
+                            break;
+                    default:
+                            result = -1;
+                            break;
+            }
     }
-
     return result;
 }
 
@@ -67,13 +75,13 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
     unsigned char status;
     char command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/available.sh \"%s\" %d",
+    snprintf( command, sizeof( command ), "script/session/available.sh \"%s\" %d",
                 filmname, atoi( number ) );
     // Processo lettore che accede al file movies.dat.
-    status = reader( command, mutex, semwrite, rcounter );
+    status = reader( command, mtm, wrtm, rdm );
 
     if( !status ) {
-        snprintf( command, sizeof( command ), "script/date.sh %s", date );
+        snprintf( command, sizeof( command ), "script/session/date.sh %s", date );
 
         if ( !WEXITSTATUS( system( command ) ) )
             return 0;
@@ -84,7 +92,7 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
     return 3;
 }
 
-void rented( int sdb, char *body ) {
+void rented( char *body ) {
 
     // Per il momento il noleggio è basato solo sulla data di restituizione,
     // nome del film e quantità disponibile.
@@ -92,19 +100,15 @@ void rented( int sdb, char *body ) {
     int res;
     char filmname[ 40 ], number[ 5 ], date[ 20 ], command[ 100 ];
 
-    if ( !connected( sdb ) ) {
-        strcpy( body, "Non sei connesso!" ); return;
-    }
-
     takeout( body, filmname, number, date );
     res = checkmovie( filmname, number, date );
 
     switch( res ) {
         case 0:
             snprintf( command, sizeof( command ),
-                      "script/rent.sh \"%s\" %d" , filmname, atoi( number ) );
+                      "script/session/rent.sh \"%s\" %d" , filmname, atoi( number ) );
             // Processo scrittore che accede al file movies.dat.
-            writer( command, semwrite );
+            writer( command, wrtm );
             strcpy( body, "Noleggio approvato" );
             break;
         case 1:
@@ -125,10 +129,6 @@ void additem( int sdb, char *body ) {
 
     takeout( body, filmname, NULL, NULL );
 
-    if ( !connected( sdb ) ) {
-        strcpy( body, "Non sei connesso!" ); return;
-    }
-
     strcpy( temp ,filmname );
     search( temp );
 
@@ -137,7 +137,7 @@ void additem( int sdb, char *body ) {
         return;
     }
 
-    snprintf( command, sizeof( command ), "script/addcart.sh %d \"%s\"" ,
+    snprintf( command, sizeof( command ), "script/session/addcart.sh %d \"%s\"" ,
                 sdb, filmname );
     if( system( command ) )
         strcpy( body, "Articolo presente nel carrello" );
@@ -151,10 +151,6 @@ void delitem( int sdb, char *body ) {
 
     takeout( body, filmname, NULL, NULL );
 
-    if ( !connected( sdb ) ) {
-        strcpy( body, "Non sei connesso!" ); return ;
-    }
-
     strcpy( temp ,filmname );
     search( temp );
 
@@ -163,7 +159,7 @@ void delitem( int sdb, char *body ) {
         return;
     }
 
-    snprintf( command, sizeof( command ), "script/fromcart.sh %d \"%s\"" ,
+    snprintf( command, sizeof( command ), "script/session/fromcart.sh %d \"%s\"" ,
                 sdb, filmname );
 
     if( system( command ) )
@@ -172,15 +168,10 @@ void delitem( int sdb, char *body ) {
         strcpy( body, "Articolo rimosso dal carrello" );
 }
 
-void returned( int sdb, char *body ) {
+void returned( char *body ) {
 
     char filmname[ 40 ], temp[ 40 ], number[ 5 ], command[ 100 ];
     takeout( body, filmname, number, NULL );
-
-    if ( !connected( sdb ) ) {
-        strcpy( body, "Non sei connesso!" );
-        return;
-    }
 
     strcpy( temp, filmname );
     search( temp );
@@ -189,9 +180,9 @@ void returned( int sdb, char *body ) {
         strcpy( body, "Film non trovato" );
     else {
         strcpy( body, "Restituzione approvata" );
-        snprintf( command, sizeof( command ), "script/returned.sh \"%s\" %d" ,
+        snprintf( command, sizeof( command ), "script/session/returned.sh \"%s\" %d" ,
                 filmname, atoi( number ) );
         // Processo scrittore che accede al file movies.dat.
-        writer( command, semwrite );
+        writer( command, wrtm );
     }
 }

@@ -4,21 +4,14 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-unsigned int rccount = 0; // numero lettori che accedono al file connessi.dat.
-unsigned int rscount = 0; // numero lettori che accedono al file signed.dat.
+unsigned int rds = 0; // numero lettori che accedono al file signed.dat.
 
 // semaforo per assicurare che i lettori non accedino nello stesso
-// momento durante l'aggiornamento della variabile rrcount.
-pthread_mutex_t cmutex = PTHREAD_MUTEX_INITIALIZER;
-// semaforo per assicurare la mutua esclusione per i processi scrittori
-// che accedono al file connessi.dat.
-pthread_mutex_t csemwrite = PTHREAD_MUTEX_INITIALIZER;
-// semaforo per assicurare che i lettori non accedino nello stesso
 // momento durante l'aggiornamento della variabile rscount.
-pthread_mutex_t smutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mts = PTHREAD_MUTEX_INITIALIZER;
 // semaforo per assicurare la mutua esclusione per i processi scrittori
 // che accedono al file signed.dat.
-pthread_mutex_t ssemwrite = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t wrts = PTHREAD_MUTEX_INITIALIZER;
 
 void writer( char *command, pthread_mutex_t mutex ) {
 
@@ -50,9 +43,9 @@ unsigned char reader( char *command, pthread_mutex_t mutex, pthread_mutex_t writ
 int connected( int sdb ) {
 
     char command[ 100 ];
-    snprintf( command, sizeof( command ), "script/connected.sh %d", sdb );
-    // Processo lettore che accede al file connessi.dat
-    return reader( command, cmutex, csemwrite, rccount );
+    snprintf( command, sizeof( command ), "script/metadata/connected.sh %d", sdb );
+    // Processo lettore
+    return reader( command, mts, wrts, rds );
 }
 
 void extract( char *body, char *username, char *password ) {

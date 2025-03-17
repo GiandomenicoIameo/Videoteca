@@ -9,7 +9,7 @@
 username=$1
 filename=$2
 
-while IFS=":" read user pass; do
+while IFS=":" read user pass ids; do
     if [[ $username == $user ]]; then
         exit 1
     fi

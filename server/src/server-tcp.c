@@ -17,8 +17,9 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <fcntl.h>
-#include <semaphore.h>
 #include <pthread.h>
+
+#include <signal.h>
 
 #define domain sin_family
 #define port sin_port
@@ -26,17 +27,15 @@
 
 int lock = 1; // Variabile condivisa che assume la funzione di lucchetto
               // per l'accesso alla risorsa condivisa sda ( descrittore di file ).
-
-sem_t semaphore;
-int sum = 0;
-
 void *runner( void *sda );
 void wait( int *lock );
-void signal( int *lock );
+void post( int *lock );
 
 int request( int sdb, char *buffer, int *type, int *action, char **body );
 void response( int result, char *message, int *sdb );
 char *split( char *buffer, int *type, int *action );
+
+void handler( int vsignal );
 
 int main( void ) {
 
@@ -48,7 +47,7 @@ int main( void ) {
 
     if( listener < 0 ) {
         perror( "creazione della socket fallita" );
-        exit( 1 );
+        exit( EXIT_FAILURE );
     }
 
     memset( &server, 0, sizeof( server ) );
@@ -60,28 +59,29 @@ int main( void ) {
 
     if( bind( listener, ( const struct sockaddr * )&server , sizeof( server ) ) < 0 ) {
         perror( "Errore ricevuto dalla primitiva bind" );
-        exit( 1 );
+        exit( EXIT_FAILURE );
     }
 
     if( listen( listener, 3 ) < 0 ) {
         perror( "Errore ricevuto dalla primitiva listen" );
-        exit( 1 );
+        exit( EXIT_FAILURE );
     }
 
-    sem_init( &semaphore, 0, 1 ); // creazione del semaforo e inizializzato a 1
-
     while( 1 ) {
+
+        signal( SIGINT, handler );
+        signal( SIGTERM, handler );
 
         puts( "Server in ascolto sulla porta 8080..." );
         address = sizeof( client );
 
         wait( &lock ); // Il thread padre esegue la primitiva accept solo dopo che il
                        // il thread figlio ha eseguito signal( &lock ): dopo che ha
-                       // duplicato il descrittore di file sda
+                       // duplicato il descrittore di file sda.
 
         if( ( sda = accept( listener, ( struct sockaddr * )&client, ( socklen_t *)&address ) ) < 0 ) {
             perror( "Errore ricevuto dalla primitiva accept" );
-            exit( 1 );
+            exit( EXIT_FAILURE );
         }
         pthread_create( &tid, NULL, runner, &sda );
     }
@@ -89,10 +89,38 @@ int main( void ) {
     return 0;
 }
 
+void handler( int vsignal ) {
+
+    extern pthread_mutex_t wrts;
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ), "script/release/disconnectall.sh" );
+    // Processo scrittore che accede al file signed.dat.
+    writer( command, wrts );
+
+    puts( "Connessione terminata!" );
+    exit( EXIT_SUCCESS );
+
+    // Il processo principale termina normalmente e ogni thread creato
+    // verrà terminato automaticatimente dal sistema operativo.
+    // In modo analogo, l'interruzione del processo provocherà la chiusura
+    // di tutte le socket aperte associate a quel processo e di quelle associate
+    // ai vari thread.
+}
+
+void wait( int *lock ) {
+    while( !( *lock ) );
+    *lock = *lock - 1;
+}
+
+void post( int *lock ) {
+    *lock = *lock + 1;
+}
+
 void *runner( void *sda ) {
 
     int sdb = dup( *( int * )sda );
-    signal( &lock );
+    post( &lock );
 
     // Il thread figlio sblocca il lucchetto e permette al thread
     // padre di utilizzare sda per la creazione di una nuova socket
@@ -100,7 +128,7 @@ void *runner( void *sda ) {
     char *body = NULL, buffer[ 1024 ], command[ 100 ];
     int result, type, action, res;
 
-    extern pthread_mutex_t csemwrite;
+    extern pthread_mutex_t wrts;
 
     while( 1 ) {
 
@@ -120,10 +148,10 @@ void *runner( void *sda ) {
             // Se l'utente era loggato prima di chiudere la connessione,
             // viene disconnesso.
             if ( connected( sdb ) ) {
-                snprintf( command, sizeof( command ),
-                          "sed -i '/^%d/d' database/connessi.dat", sdb );
+                 snprintf( command, sizeof( command ),
+                        "script/release/disconnect.sh %d",sdb );
                 // Processo scrittore che accede al file connessi.dat.
-                writer( command, csemwrite );
+                writer( command, wrts );
             }
             break;
         }
@@ -131,13 +159,6 @@ void *runner( void *sda ) {
         buffer[ res ] = '\0'; // Tale istruzione di assegnazione è fondamentale
                               // per le funzioni split() ed extract() in quanto consente
                               // loro di capire il punto finale del corpo del messaggio.
-
-        sem_wait( &semaphore );
-        /* Sezione d'ingresso */
-        sum = sum + 1;
-        /* Sezione di uscita */
-        sem_post( &semaphore );
-
         printf( "Client: %d\n", sdb );
 
         // Le funzioni request() e response() usano il passaggio di parametri per riferimento
@@ -152,18 +173,8 @@ void *runner( void *sda ) {
     }
 
     close( sdb );
-
     puts( "Connessione terminata" );
     pthread_exit( 0 );
-}
-
-void wait( int *lock ) {
-    while( !( *lock ) );
-    *lock = *lock - 1;
-}
-
-void signal( int *lock ) {
-    *lock = *lock + 1;
 }
 
 int request( int sdb, char *buffer, int *type, int *action, char **body ) {
@@ -174,24 +185,23 @@ int request( int sdb, char *buffer, int *type, int *action, char **body ) {
     printf( "Tipo di richiesta: %d%d\n", *type, *action );
 
     switch( *type ) {
-        case AUTHENTICATION:
-            result = authentication( sdb, *action, *body );
-            break;
-        case SESSION:
-            result = session( sdb, *action, *body );
-            break;
-        case RELEASE:
-            result = release( sdb, *action, *body );
-            break;
-        case SEARCH:
-            search( *body );
-            result = 3;
-            break;
-        default:
-            result = -1;
-            break;
+            case AUTHENTICATION:
+                    result = authentication( sdb, *action, *body );
+                    break;
+            case SESSION:
+                    result = session( sdb, *action, *body );
+                    break;
+            case RELEASE:
+                    result = release( sdb, *action, *body );
+                    break;
+            case SEARCH:
+                    search( *body );
+                    result = 3;
+                    break;
+            default:
+                    result = -1;
+                    break;
     }
-
     return result;
 }
 
@@ -200,20 +210,20 @@ void response( int result, char *body, int *sdb ) {
     char message[ 1024 ];
     // Il server non ha compreso la richiesta del client e, in risposta, invia
     // un codice corrispondende a tale evento.
-    if ( result < 0 )
-        strcpy( message, "404 Bad Request:" );
+    if ( result < 0 ) {
+            strcpy( message, "404 Bad Request:" );
     // Il server ha compreso e accettato con successo la richiesta del client
     // e, in risposta, invia una conferma dell'avvenuta comprensione.
-    else
-        strcpy( message, "200 OK:" );
-
+    } else {
+            strcpy( message, "200 OK:" );
+    }
     strcat( message, body );
     // assemble( message, type, action, body );
     message[ strlen( message ) + 1 ] = '\0';
 
     if( write( *sdb, ( const char * )message, strlen( message ) ) < 0 ) {
-        perror( "Errore ricevuto dalla primitiva write" );
-        pthread_exit( ( void * )1 );
+            perror( "Errore ricevuto dalla primitiva write" );
+            pthread_exit( ( void * )1 );
     }
 }
 
@@ -222,7 +232,7 @@ char *split( char *buffer, int *type, int *action ) {
     unsigned int code[ 2 ];
 
     for( int i = 0; isdigit( *buffer ); buffer++, i++ )
-        code[ i ] = ( int )*buffer - 48;
+            code[ i ] = ( int )*buffer - 48;
 
     *type = code[ 0 ];
     *action = code[ 1 ];

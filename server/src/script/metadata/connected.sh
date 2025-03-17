@@ -8,11 +8,11 @@
 
 ids=$1
 
-while IFS=":" read id user pass; do
+while IFS=":" read user pass id; do
     if [[ $ids -eq $id ]]; then
         exit 0
     fi
-done < database/connessi.dat
+done < database/signed.dat
 
 exit 1
 

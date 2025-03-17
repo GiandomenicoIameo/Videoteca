@@ -7,19 +7,14 @@
 # Di conseguenza vengono rimosse le righe corrispondenti all'username e
 # alla password nel file connessi.dat e il carrello dell'utente.
 
-sda=$1
-username=$2
-password=$3
+ids=$1
 
-counter=1
+declare -i line=1
+declare -i status=0
 
-while read user passwd; do
-    if [[ $username == $user ]] && [[ $password == $passwd ]]; then
-        sed -i ${counter}d database/signed.dat
-        script/removecart.sh $sda
-        exit 0
+while IFS=":" read user passwd id; do
+    if [[ $ids -eq $id ]]; then
+        sed -i ${line}d database/signed.dat
     fi
-    (( counter = counter + 1 ))
+    (( line = line + 1 ))
 done < database/signed.dat
-
-exit 1

@@ -7,10 +7,8 @@
 username=$1
 password=$2
 
-IFS=":"
-
-while read user pass; do
-    if [[ $username == $user ]] && [[ $password == $pass ]]; then
+while IFS=":" read user pass ids; do
+    if [[ $username == $user ]] && [[ $password == $pass ]] && [[ $ids -eq 0 ]]; then
         exit 0
     fi
 done < database/signed.dat
