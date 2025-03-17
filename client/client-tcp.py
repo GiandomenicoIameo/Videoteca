@@ -20,7 +20,8 @@ def session( head, action ):
         message = head + filmname + '\0' + number + '\0' + date + '\0'
     elif action == 1: # Aggiungi al carrello
         filmname = input( 'Nome film: ' )
-        message = head + filmname + '\0'
+        number   = input( 'Inserisci quantità: ' )
+        message = head + filmname + '\0' + number + '\0'
     elif action == 2: # Rimuovi dal carrello
         filmname = input( 'Nome film: ' )
         message = head + filmname + '\0'
@@ -28,7 +29,8 @@ def session( head, action ):
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
         message = head + filmname + '\0' + number + '\0'
-
+    elif action == 4: # Richiesta di checkout
+        message = head + ''
     return message
 
 def release( head, action ):
@@ -71,8 +73,7 @@ while True:
         message = session( head, action )
     elif method == 2:
         message = release( head, action )
-        if action == 0 or action == 1:
-            break
+        break
     elif method == 3:
         message = search( head )
     else:
