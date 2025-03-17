@@ -24,7 +24,8 @@ def session( head, action ):
         message = head + filmname + '\0' + number + '\0'
     elif action == 2: # Rimuovi dal carrello
         filmname = input( 'Nome film: ' )
-        message = head + filmname + '\0'
+        number   = input( 'Inserisci quantità: ' )
+        message = head + filmname + '\0' + number + '\0'
     elif action == 3: # Richiesta di restituzione
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
