@@ -11,8 +11,8 @@ filename=$2
 
 while IFS=":" read user pass ids; do
     if [[ $username == $user ]]; then
-        exit 1
+        exit 0
     fi
 done < database/signed.dat
 
-exit 0
+exit 1

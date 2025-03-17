@@ -35,7 +35,7 @@ unsigned char reader( char *command, pthread_mutex_t mutex, pthread_mutex_t writ
             pthread_mutex_unlock( &write );
     } pthread_mutex_unlock( &mutex );
 
-    return 1 - res;
+    return res;
 }
 
 int connected( int sdb ) {

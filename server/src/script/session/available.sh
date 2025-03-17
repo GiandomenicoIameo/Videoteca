@@ -7,7 +7,7 @@ IFS=":"
 while read film num; do
 
     if [[ $filmname == $film ]]; then
-        if (( $number <= $num )); then
+        if (( $number >= 0 )) && (( $number <= $num )); then
             exit 0
         else
             exit 1

@@ -9,8 +9,8 @@ filmname=$1
 
 while IFS=":" read name available; do
     if [[ $filmname == $name ]]; then
-        exit 0
+        exit 1
     fi
 done < database/movies.dat
 
-exit 1
+exit 0

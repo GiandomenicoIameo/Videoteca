@@ -23,14 +23,14 @@ void search( char *body ) {
             pthread_mutex_lock( &wrtm );
     } pthread_mutex_unlock( &mtm );
 
-    res = WEXITSTATUS( system( command ) );     /* Sesione critica */
+    res = WEXITSTATUS( system( command ) );/* Sesione critica */
 
     pthread_mutex_lock( &mtm );
     if ( --rdm == 0 ) {
             pthread_mutex_unlock( &wrtm );
     } pthread_mutex_unlock( &mtm );
 
-    if ( !res ) {
+    if ( res ) {
             strcpy( body, "Film trovato" );
     } else {
         strcpy( body, "Film non trovato" );

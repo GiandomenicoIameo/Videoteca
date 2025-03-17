@@ -9,5 +9,7 @@ void delitem( int sdb, char *body );
 
 void takeout( char *body, char *filmname, char *number, char *date );
 unsigned int checkmovie( char *filmname, char *number, char *date );
-void rented( char *body );
+void rentest( char *body );
 void returned( char *body );
+
+void checkout( int sdb, char *body );

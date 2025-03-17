@@ -9,8 +9,8 @@ password=$2
 
 while IFS=":" read user pass ids; do
     if [[ $username == $user ]] && [[ $password == $pass ]] && [[ $ids -eq 0 ]]; then
-        exit 0
+        exit 1
     fi
 done < database/signed.dat
 
-exit 1
+exit 0

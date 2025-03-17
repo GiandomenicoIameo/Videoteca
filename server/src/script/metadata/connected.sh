@@ -10,10 +10,10 @@ ids=$1
 
 while IFS=":" read user pass id; do
     if [[ $ids -eq $id ]]; then
-        exit 0
+        exit 1
     fi
 done < database/signed.dat
 
-exit 1
+exit 0
 
 

@@ -1,18 +1,22 @@
 #!/bin/bash
 
-sda=$1
+ids=$1
 filmname=$2
 
-if ! [[ -e database/cart$sda ]]; then
-    touch database/cart$sda
+number=$3
+real=$4
+
+if ! [[ -e database/cart$ids ]]; then
+    touch database/cart$ids
 fi
 
-IFS=":"
-while read film number; do
-    if [[ $film == $filmname ]]; then
-        exit 1
-    fi
-done < database/cart$sda
+declare -i line=1
 
-echo $filmname >> database/cart$sda
-exit 0
+while IFS=":" read film num; do
+    if [[ $film == $filmname ]]; then
+        sed -i ${line}d database/cart$ids
+        break
+    fi
+done < database/cart$ids
+
+echo "$filmname":$number:$real >> database/cart$ids
