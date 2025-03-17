@@ -74,9 +74,11 @@ int main( void ) {
             puts( "Server in ascolto sulla porta 8080..." );
             address = sizeof( client );
 
-            wait( &lock ); // Il thread padre esegue la primitiva accept solo dopo che il
-                           // il thread figlio ha eseguito signal( &lock ): dopo che ha
-                           // duplicato il descrittore di file sda.
+            wait( &lock );
+
+            // Il thread padre esegue la primitiva accept solo dopo che il
+            // il thread figlio ha eseguito signal( &lock ): dopo che ha
+            // duplicato il descrittore di file sda.
 
             if( ( sda = accept( listener,
                                 ( struct sockaddr * )&client,
