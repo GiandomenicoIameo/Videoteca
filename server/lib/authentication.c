@@ -73,8 +73,9 @@ void signup( int sdb, char *body ) {
     if ( !unique( username ) ) {
             strcpy( body, "Username già in uso!" );
     } else {
-            snprintf( command, sizeof( command ), "script/authentication/create.sh %d \"%s\" \"%s\"",
-                    sdb, username, password );
+            snprintf( command, sizeof( command ),
+                      "script/authentication/create.sh %d \"%s\" \"%s\"",
+                      sdb, username, password );
             // Processo scrittore che accede al file signed.dat.
             writer( command, wrts );
             strcpy( body, "Account creato!" );
@@ -83,29 +84,30 @@ void signup( int sdb, char *body ) {
 
 unsigned char recorded( char *username, char *password ) {
 
+    extern unsigned int rds;
+
     extern pthread_mutex_t mts;
     extern pthread_mutex_t wrts;
 
-    extern unsigned int rds;
-
     char command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/authentication/recorded.sh \"%s\" \"%s\"",
-             username, password );
+    snprintf( command, sizeof( command ),
+              "script/authentication/recorded.sh \"%s\" \"%s\"",
+              username, password );
     // Processo lettore che accede al file signed.dat.
     return reader( command, mts, wrts, rds );
 }
 
 unsigned char unique( char *username ) {
 
+    extern unsigned int rds;
+
     extern pthread_mutex_t mts;
     extern pthread_mutex_t wrts;
 
-    extern unsigned int rds;
-
     char command[ 100 ];
-    snprintf( command, sizeof( command ), "script/authentication/unique.sh \"%s\"",
-              username );
+    snprintf( command, sizeof( command ),
+              "script/authentication/unique.sh \"%s\"", username );
     // Processo lettore che accede al file signed.dat
     return reader( command, mts, wrts, rds );
 }

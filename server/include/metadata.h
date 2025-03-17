@@ -7,6 +7,7 @@
     int connected( int sdb );
 
     void writer( char *command, pthread_mutex_t mutex );
-    unsigned char reader( char *command, pthread_mutex_t mutex, pthread_mutex_t write, unsigned int readers );
+    unsigned char reader( char *command, pthread_mutex_t mutex,
+                          pthread_mutex_t write, unsigned int readers );
 
 #endif

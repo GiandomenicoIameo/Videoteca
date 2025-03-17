@@ -46,8 +46,8 @@ int main( void ) {
     listener = socket( AF_INET, SOCK_STREAM, 0 );
 
     if( listener < 0 ) {
-        perror( "creazione della socket fallita" );
-        exit( EXIT_FAILURE );
+            perror( "creazione della socket fallita" );
+            exit( EXIT_FAILURE );
     }
 
     memset( &server, 0, sizeof( server ) );
@@ -57,33 +57,34 @@ int main( void ) {
     server.port = htons( 8080 );
     server.ip = htonl( INADDR_ANY );
 
-    if( bind( listener, ( const struct sockaddr * )&server , sizeof( server ) ) < 0 ) {
-        perror( "Errore ricevuto dalla primitiva bind" );
-        exit( EXIT_FAILURE );
+    if ( bind( listener, ( const struct sockaddr * )&server , sizeof( server ) ) < 0 ) {
+            perror( "Errore ricevuto dalla primitiva bind" );
+            exit( EXIT_FAILURE );
     }
 
-    if( listen( listener, 3 ) < 0 ) {
-        perror( "Errore ricevuto dalla primitiva listen" );
-        exit( EXIT_FAILURE );
+    if ( listen( listener, 3 ) < 0 ) {
+            perror( "Errore ricevuto dalla primitiva listen" );
+            exit( EXIT_FAILURE );
     }
 
     while( 1 ) {
+            signal( SIGINT, handler );
+            signal( SIGTERM, handler );
 
-        signal( SIGINT, handler );
-        signal( SIGTERM, handler );
+            puts( "Server in ascolto sulla porta 8080..." );
+            address = sizeof( client );
 
-        puts( "Server in ascolto sulla porta 8080..." );
-        address = sizeof( client );
+            wait( &lock ); // Il thread padre esegue la primitiva accept solo dopo che il
+                           // il thread figlio ha eseguito signal( &lock ): dopo che ha
+                           // duplicato il descrittore di file sda.
 
-        wait( &lock ); // Il thread padre esegue la primitiva accept solo dopo che il
-                       // il thread figlio ha eseguito signal( &lock ): dopo che ha
-                       // duplicato il descrittore di file sda.
-
-        if( ( sda = accept( listener, ( struct sockaddr * )&client, ( socklen_t *)&address ) ) < 0 ) {
-            perror( "Errore ricevuto dalla primitiva accept" );
-            exit( EXIT_FAILURE );
-        }
-        pthread_create( &tid, NULL, runner, &sda );
+            if( ( sda = accept( listener,
+                                ( struct sockaddr * )&client,
+                                ( socklen_t *)&address ) ) < 0 ) {
+                    perror( "Errore ricevuto dalla primitiva accept" );
+                    exit( EXIT_FAILURE );
+            }
+            pthread_create( &tid, NULL, runner, &sda );
     }
 
     return 0;
@@ -94,7 +95,8 @@ void handler( int vsignal ) {
     extern pthread_mutex_t wrts;
     char command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/release/disconnectall.sh" );
+    snprintf( command, sizeof( command ),
+              "script/release/disconnectall.sh" );
     // Processo scrittore che accede al file signed.dat.
     writer( command, wrts );
 
@@ -109,8 +111,9 @@ void handler( int vsignal ) {
 }
 
 void wait( int *lock ) {
-    while( !( *lock ) );
-    *lock = *lock - 1;
+    while( !( *lock ) ) {
+            ;
+    } *lock = *lock - 1;
 }
 
 void post( int *lock ) {
@@ -131,34 +134,32 @@ void *runner( void *sda ) {
     extern pthread_mutex_t wrts;
 
     while( 1 ) {
+            res = read( sdb, buffer, sizeof( buffer ) - 1 );
 
-        res = read( sdb, buffer, sizeof( buffer ) - 1 );
+            if( res < 0 ) {
+                    perror( "Errore ricevuto dalla primitiva read" );
+                    pthread_exit( ( void * )1 );
+            } else if( res == 0 ) {
+                    // QUando viene restituito un valore uguale a 0 significa EOF
+                    // ( end-of-file ) ovvero indica che il punto terminale posto
+                    // all'altro estremo della connessione ha voluto chiudere la
+                    // connessione e quindi il file descriptor non potrà più
+                    // essere utilizzato per leggere dati.
 
-        if( res < 0 ) {
-            perror( "Errore ricevuto dalla primitiva read" );
-            pthread_exit( ( void * )1 );
+                    // Se l'utente era loggato prima di chiudere la connessione,
+                    // viene disconnesso.
+                    if ( connected( sdb ) ) {
+                            snprintf( command, sizeof( command ),
+                                      "script/release/disconnect.sh %d",sdb );
+                            // Processo scrittore che accede al file connessi.dat.
+                            writer( command, wrts );
+                    }
+                    break;
         }
-        else if( res == 0 ) {
-            // QUando viene restituito un valore uguale a 0 significa EOF
-            // ( end-of-file ) ovvero indica che il punto terminale posto
-            // all'altro estremo della connessione ha voluto chiudere la
-            // connessione e quindi il file descriptor non potrà più
-            // essere utilizzato per leggere dati.
-
-            // Se l'utente era loggato prima di chiudere la connessione,
-            // viene disconnesso.
-            if ( connected( sdb ) ) {
-                 snprintf( command, sizeof( command ),
-                        "script/release/disconnect.sh %d",sdb );
-                // Processo scrittore che accede al file connessi.dat.
-                writer( command, wrts );
-            }
-            break;
-        }
-
-        buffer[ res ] = '\0'; // Tale istruzione di assegnazione è fondamentale
-                              // per le funzioni split() ed extract() in quanto consente
-                              // loro di capire il punto finale del corpo del messaggio.
+        // L'istruzione di assegnazione seguente è fondamentale
+        // per le funzioni split() ed extract() in quanto consente
+        // loro di capire il punto finale del corpo del messaggio.
+        buffer[ res ] = '\0';
         printf( "Client: %d\n", sdb );
 
         // Le funzioni request() e response() usano il passaggio di parametri per riferimento
@@ -168,8 +169,9 @@ void *runner( void *sda ) {
         result = request( sdb, buffer, &type, &action, &body );
         response( result, body, &sdb );
 
-        if ( result == RELEASE )
-            break;
+        if ( result == RELEASE ) {
+                break;
+        }
     }
 
     close( sdb );
@@ -231,14 +233,14 @@ char *split( char *buffer, int *type, int *action ) {
 
     unsigned int code[ 2 ];
 
-    for( int i = 0; isdigit( *buffer ); buffer++, i++ )
+    for( int i = 0; isdigit( *buffer ); buffer++, i++ ) {
             code[ i ] = ( int )*buffer - 48;
+    } *type = code[ 0 ]; *action = code[ 1 ];
 
-    *type = code[ 0 ];
-    *action = code[ 1 ];
+    // La variabile variabile buffer contiene l'indirizzo di memoria
+    // del buffer, dove è memorizzato il messaggio,
+    // aumentato di due indirizzi. Ciò corrisponde
+    // al corpo del messaggio.
 
-    return buffer; // Tale variabile contiene l'indirizzo di memoria
-                   // del buffer, dove è memorizzato il messaggio,
-                   // aumentato di due indirizzi. Ciò corrisponde
-                   // al corpo del messaggio
+    return buffer;
 }

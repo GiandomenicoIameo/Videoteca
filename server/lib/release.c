@@ -63,12 +63,13 @@ void cancel( int sdb, char *body ) {
 
     char command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/release/cancel.sh %d",
-                sdb );
+    snprintf( command, sizeof( command ),
+              "script/release/cancel.sh %d", sdb );
     // Processo scrittore che accede al file signed.dat.
     writer( command, wrts );
     // Processo scrittore che accede al file connessi.dat.
-    snprintf( command, sizeof( command ), "script/release/removecart.sh %d", sdb );
+    snprintf( command, sizeof( command ),
+              "script/release/removecart.sh %d", sdb );
     system( command );
     strcpy( body, "Account cancellato!" );
 }

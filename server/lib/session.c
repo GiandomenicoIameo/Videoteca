@@ -51,22 +51,22 @@ int session( int sdb, int action, char *body ) {
 
 void takeout( char *body, char *filmname, char *number, char *date ) {
 
-     for ( ; *body != '\0'; body++, filmname++ )
-        *filmname = *body;
-    *filmname = '\0';
+     for ( ; *body != '\0'; body++, filmname++ ) {
+            *filmname = *body;
+     } *filmname = '\0';
 
     if ( number ) {
-        body++;
-        for ( ; *body != '\0'; body++, number++ )
-            *number = *body;
-        *number = '\0';
+            body++;
+            for ( ; *body != '\0'; body++, number++ ) {
+                    *number = *body;
+            } *number = '\0';
     }
 
     if ( date ) {
-        body++;
-        for ( ; *body != '\0'; body++, date++ )
-            *date = *body;
-        *date = '\0';
+            body++;
+            for ( ; *body != '\0'; body++, date++ ) {
+                    *date = *body;
+            } *date = '\0';
     }
 }
 
@@ -75,21 +75,26 @@ unsigned int checkmovie( char *filmname, char *number, char *date ) {
     unsigned char status;
     char command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/session/available.sh \"%s\" %d",
-                filmname, atoi( number ) );
+    snprintf( command, sizeof( command ),
+              "script/session/available.sh \"%s\" %d",
+              filmname, atoi( number ) );
     // Processo lettore che accede al file movies.dat.
     status = reader( command, mtm, wrtm, rdm );
 
     if( !status ) {
-        snprintf( command, sizeof( command ), "script/session/date.sh %s", date );
+            snprintf( command, sizeof( command ),
+                      "script/session/date.sh %s", date );
 
-        if ( !WEXITSTATUS( system( command ) ) )
-            return 0;
-        return 1;
+            if ( !WEXITSTATUS( system( command ) ) ) {
+                    return 0;
+            } else {
+                    return 1;
+            }
+    } else if( status == 1 ) {
+            return 2;
+    } else {
+            return 3;
     }
-    else if( status == 1 )
-        return 2;
-    return 3;
 }
 
 void rented( char *body ) {
@@ -97,29 +102,30 @@ void rented( char *body ) {
     // Per il momento il noleggio è basato solo sulla data di restituizione,
     // nome del film e quantità disponibile.
 
-    int res;
+    unsigned int res;
     char filmname[ 40 ], number[ 5 ], date[ 20 ], command[ 100 ];
 
     takeout( body, filmname, number, date );
     res = checkmovie( filmname, number, date );
 
     switch( res ) {
-        case 0:
-            snprintf( command, sizeof( command ),
-                      "script/session/rent.sh \"%s\" %d" , filmname, atoi( number ) );
-            // Processo scrittore che accede al file movies.dat.
-            writer( command, wrtm );
-            strcpy( body, "Noleggio approvato" );
-            break;
-        case 1:
-            strcpy( body, "Data non valida" );
-            break;
-        case 2:
-            strcpy( body, "Quantità non disponibile" );
-            break;
-        default:
-            strcpy( body, "Film non trovato" );
-            break;
+            case 0:
+                    snprintf( command, sizeof( command ),
+                              "script/session/rent.sh \"%s\" %d" ,
+                              filmname, atoi( number ) );
+                    // Processo scrittore che accede al file movies.dat.
+                    writer( command, wrtm );
+                    strcpy( body, "Noleggio approvato" );
+                    break;
+            case 1:
+                    strcpy( body, "Data non valida" );
+                    break;
+            case 2:
+                    strcpy( body, "Quantità non disponibile" );
+                    break;
+            default:
+                    strcpy( body, "Film non trovato" );
+                    break;
     }
 }
 
@@ -133,16 +139,17 @@ void additem( int sdb, char *body ) {
     search( temp );
 
     if ( strcmp( temp, "Film trovato") ) {
-        strcpy( body, temp );
-        return;
-    }
-
-    snprintf( command, sizeof( command ), "script/session/addcart.sh %d \"%s\"" ,
-                sdb, filmname );
-    if( system( command ) ) {
-            strcpy( body, "Articolo presente nel carrello" );
+            strcpy( body, temp );
     } else {
-            strcpy( body, "Articolo aggiunto al carrello" );
+            snprintf( command, sizeof( command ),
+                      "script/session/addcart.sh %d \"%s\"" ,
+                      sdb, filmname );
+
+            if( system( command ) ) {
+                    strcpy( body, "Articolo presente nel carrello" );
+            } else {
+                    strcpy( body, "Articolo aggiunto al carrello" );
+            }
     }
 }
 
@@ -156,17 +163,17 @@ void delitem( int sdb, char *body ) {
     search( temp );
 
     if ( strcmp( temp, "Film trovato") ) {
-        strcpy( body, temp );
-        return;
-    }
-
-    snprintf( command, sizeof( command ), "script/session/fromcart.sh %d \"%s\"" ,
-                sdb, filmname );
-
-    if( system( command ) ) {
-            strcpy( body, "Articolo non presente nel carrello" );
+            strcpy( body, temp );
     } else {
-            strcpy( body, "Articolo rimosso dal carrello" );
+            snprintf( command, sizeof( command ),
+                      "script/session/fromcart.sh %d \"%s\"",
+                      sdb, filmname );
+
+            if( system( command ) ) {
+                    strcpy( body, "Articolo non presente nel carrello!" );
+            } else {
+                    strcpy( body, "Articolo rimosso dal carrello!" );
+            }
     }
 }
 
@@ -178,13 +185,14 @@ void returned( char *body ) {
     strcpy( temp, filmname );
     search( temp );
 
-    if ( strcmp( temp, "Film trovato") ) {
-            strcpy( body, "Film non trovato" );
-    } else {
+    if ( !strcmp( temp, "Film trovato") ) {
             strcpy( body, "Restituzione approvata" );
-            snprintf( command, sizeof( command ), "script/session/returned.sh \"%s\" %d" ,
-                    filmname, atoi( number ) );
+            snprintf( command, sizeof( command ),
+                      "script/session/returned.sh \"%s\" %d" ,
+                      filmname, atoi( number ) );
             // Processo scrittore che accede al file movies.dat.
             writer( command, wrtm );
+    } else {
+            strcpy( body, "Film non trovato" );
     }
 }

@@ -24,18 +24,16 @@ unsigned char reader( char *command, pthread_mutex_t mutex, pthread_mutex_t writ
     unsigned char res;
 
     pthread_mutex_lock( &mutex );
-    readers++;
-    if ( readers == 1 )
-        pthread_mutex_lock( &write );
-    pthread_mutex_unlock( &mutex );
+    if ( ++readers == 1 ) {
+            pthread_mutex_lock( &write );
+    } pthread_mutex_unlock( &mutex );
 
     res = WEXITSTATUS( system( command ) ); /* Sezione critica */
 
     pthread_mutex_lock( &mutex );
-    readers--;
-    if ( readers == 0 )
-        pthread_mutex_unlock( &write );
-    pthread_mutex_unlock( &mutex );
+    if ( --readers == 0 ) {
+            pthread_mutex_unlock( &write );
+    } pthread_mutex_unlock( &mutex );
 
     return 1 - res;
 }
@@ -43,7 +41,8 @@ unsigned char reader( char *command, pthread_mutex_t mutex, pthread_mutex_t writ
 int connected( int sdb ) {
 
     char command[ 100 ];
-    snprintf( command, sizeof( command ), "script/metadata/connected.sh %d", sdb );
+    snprintf( command, sizeof( command ),
+              "script/metadata/connected.sh %d", sdb );
     // Processo lettore
     return reader( command, mts, wrts, rds );
 }
@@ -56,12 +55,12 @@ void extract( char *body, char *username, char *password ) {
     // gli array nella funzione chiamante relativi all'username e
     // alla password, memorizzandovi delle stringhe.
 
-    for( ; *body != ' '; body++, username++ )
-        *username = *body;
-    *username = '\0';
+    for( ; *body != ' '; body++, username++ ) {
+            *username = *body;
+    } *username = '\0';
 
     body++;
-    for( ; *body != '\0'; body++, password++ )
-        *password = *body;
-    *password = '\0';
+    for( ; *body != '\0'; body++, password++ ) {
+            *password = *body;
+    } *password = '\0';
 }
