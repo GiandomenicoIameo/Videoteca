@@ -38,7 +38,7 @@ void signin( int sdb, char *body ) {
     char username[ 20 ], command[ 100 ],
          password[ 20 ];
 
-    extern pthread_mutex_t wrts;
+    extern semaphore wrts;
 
     // Estrazione dell'username e della password dal corpo del messaggio.
     extract( body, username, password );
@@ -86,8 +86,8 @@ unsigned char recorded( char *username, char *password ) {
 
     extern unsigned int rds;
 
-    extern pthread_mutex_t mts;
-    extern pthread_mutex_t wrts;
+    extern semaphore mts;
+    extern semaphore wrts;
 
     char command[ 100 ];
 
@@ -102,8 +102,8 @@ unsigned char unique( char *username ) {
 
     extern unsigned int rds;
 
-    extern pthread_mutex_t mts;
-    extern pthread_mutex_t wrts;
+    extern semaphore mts;
+    extern semaphore wrts;
 
     char command[ 100 ];
     snprintf( command, sizeof( command ),

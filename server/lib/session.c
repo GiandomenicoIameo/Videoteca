@@ -10,11 +10,15 @@
 unsigned int rdm = 0; // lettori del file movies.dat.
 // semaforo per assicurare che i lettori non accedino nello stesso
 // momento durante l'aggiornamento della variabile rdm.
-pthread_mutex_t mtm = PTHREAD_MUTEX_INITIALIZER;
+semaphore mtm = PTHREAD_MUTEX_INITIALIZER;
 // semaforo per assicurare la mutua esclusione per i processi scrittori
 // nel file movies.dat.
-pthread_mutex_t wrtm = PTHREAD_MUTEX_INITIALIZER;
+semaphore wrtm = PTHREAD_MUTEX_INITIALIZER;
 // Il mutex viene inizializzato una sola volta dalla libreria POSIX.
+
+unsigned int rdc = 0;
+semaphore mtc = PTHREAD_MUTEX_INITIALIZER;
+semaphore wrtc = PTHREAD_MUTEX_INITIALIZER;
 
 int session( int sdb, int action, char *body ) {
 
@@ -106,13 +110,10 @@ void rentest( char *body ) {
     // Per il momento il noleggio è basato solo sulla data di restituizione,
     // nome del film e quantità disponibile.
 
-    unsigned int res;
     char filmname[ 40 ], number[ 5 ], date[ 20 ];
-
     takeout( body, filmname, number, date );
-    res = checkmovie( filmname, number, date );
 
-    switch( res ) {
+    switch( checkmovie( filmname, number, date ) ) {
             case 0:
                     rent( filmname, atoi( number ) );
                     strcpy( body, "Noleggio approvato" );
@@ -133,7 +134,7 @@ void rent( char *filmname, int number ) {
 
     void update( char *filmname );
 
-    extern pthread_mutex_t wrtm;
+    extern semaphore wrtm;
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
@@ -147,58 +148,57 @@ void rent( char *filmname, int number ) {
 void additem( int sdb, char *body ) {
 
     unsigned int res;
-    char filmname[ 40 ], temp[ 40 ], number[ 5 ], command[ 100 ];
+    char filmname[ 40 ], number[ 5 ], command[ 100 ];
 
     takeout( body, filmname, number, NULL );
 
     snprintf( command, sizeof( command ), "script/session/available.sh \"%s\" %d",
               filmname, atoi( number ) );
-    res = WEXITSTATUS( system( command ) );
+    res = reader( command, mtm, wrtm, rdm );
 
-    if ( res ) {
-            strcpy( body, "Film non trovato o quantità non disponibile!" );
-            return;
-    }
-
-    strcpy( temp ,filmname );
-    search( temp );
-
-    if ( strcmp( temp, "Film trovato") ) {
-            strcpy( body, temp );
+    if ( res == 2 ) {
+            strcpy( body, "Film non trovato!" );
+    } else if( res == 1 ) {
+            strcpy( body, "Quantità non disponibile!" );
     } else {
             snprintf( command, sizeof( command ), "script/search/number.sh \"%s\"",
                       filmname );
-            res = WEXITSTATUS( system( command ) );
-            snprintf( command, sizeof( command ),
-                      "script/session/addcart.sh %d \"%s\" %d %d" ,
-                      sdb, filmname, atoi( number ), res );
-            system( command );
+            res = reader( command, mtm, wrtm, rdm );
 
-            strcpy( body, "Film trovato!" );
+            snprintf( command, sizeof( command ),
+                      "script/session/addcart.sh %d \"%s\" %d %d",
+                      sdb, filmname, atoi( number ), res );
+            // Processo che accede al proprio carrello e agisce come processo
+            // lettore.
+            reader( command, mtc, wrtc, rdc );
+
+            strcpy( body, "Articolo/i aggiunto al carrello!" );
     }
 }
 
 void delitem( int sdb, char *body ) {
 
-    char filmname[ 40 ], temp[ 40 ], command[ 100 ];
+    unsigned int res;
+    char filmname[ 40 ], number[ 5 ], command[ 100 ];
 
-    takeout( body, filmname, NULL, NULL );
+    takeout( body, filmname, number, NULL );
 
-    strcpy( temp ,filmname );
-    search( temp );
+    snprintf( command, sizeof( command ), "script/session/searchitem.sh %d \"%s\" %d",
+              sdb, filmname, atoi( number ) );
+    res = reader( command, mtm, wrtm, rdm );
 
-    if ( strcmp( temp, "Film trovato") ) {
-            strcpy( body, temp );
+    if ( res == 2 ) {
+            strcpy( body, "Film non trovato!" );
+    } else if( res == 1 ) {
+            strcpy( body, "Valore inserito non valido!" );
     } else {
             snprintf( command, sizeof( command ),
-                      "script/session/fromcart.sh %d \"%s\"",
-                      sdb, filmname );
-
-            if( WEXITSTATUS( system( command ) ) ) {
-                    strcpy( body, "Articolo non presente nel carrello!" );
-            } else {
-                    strcpy( body, "Articolo rimosso dal carrello!" );
-            }
+                      "script/session/fromcart.sh %d \"%s\" %d",
+                      sdb, filmname, atoi( number ) );
+            // Processo che accede al proprio carrello e agisce come processo
+            // lettore.
+            reader( command, mtc, wrtc, rdc );
+            strcpy( body, "Articolo/i rimosso dal carrello!" );
     }
 }
 
@@ -253,5 +253,6 @@ void update( char *filmname ) {
 
     snprintf( command, sizeof( command ),
               "script/session/update.sh \"%s\" %d", filmname, number );
-    system( command );
+    // Processo che accede a tutti i carrelli e agisce come processo scrittore.
+    writer( command, wrtc );
 }

@@ -9,8 +9,8 @@ void search( char *body ) {
 
     extern unsigned int rdm;
 
-    extern pthread_mutex_t mtm;
-    extern pthread_mutex_t wrtm;
+    extern semaphore mtm;
+    extern semaphore wrtm;
 
     unsigned int res;
     char name[ 40 ], command[ 100 ];

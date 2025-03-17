@@ -12,7 +12,7 @@ fi
 
 declare -i line=1
 
-while IFS=":" read film num; do
+while IFS=":" read film num available; do
     if [[ $film == $filmname ]]; then
         sed -i ${line}d database/cart$ids
         break

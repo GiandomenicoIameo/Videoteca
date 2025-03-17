@@ -37,7 +37,7 @@ void signout( int sdb, char *body ) {
     // cancellare il suo account abbia effettuato in un precedente momento
     // l'accesso a quest'ultimo.
 
-    extern pthread_mutex_t wrts;
+    extern semaphore wrts;
 
     // L'utente non può disconnetterne un altro perché
     // la procedura si basa solo sull'dentificativo
@@ -59,7 +59,7 @@ void cancel( int sdb, char *body ) {
     // cancellare il suo account abbia effettuato in un precedente momento
     // l'accesso a quest'ultimo.
 
-    extern pthread_mutex_t wrts;
+    extern semaphore wrts;
 
     char command[ 100 ];
 

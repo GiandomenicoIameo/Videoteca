@@ -25,8 +25,10 @@
 #define port sin_port
 #define ip sin_addr.s_addr
 
-int lock = 1; // Variabile condivisa che assume la funzione di lucchetto
-              // per l'accesso alla risorsa condivisa sda ( descrittore di file ).
+// Variabile condivisa che assume la funzione di lucchetto
+// per l'accesso alla risorsa condivisa sda ( descrittore di file ).
+int lock = 1;
+
 void *runner( void *sda );
 void wait( int *lock );
 void post( int *lock );
@@ -94,7 +96,7 @@ int main( void ) {
 
 void handler( int vsignal ) {
 
-    extern pthread_mutex_t wrts;
+    extern semaphore wrts;
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
@@ -133,7 +135,7 @@ void *runner( void *sda ) {
     char *body = NULL, buffer[ 1024 ], command[ 100 ];
     int result, type, action, res;
 
-    extern pthread_mutex_t wrts;
+    extern semaphore wrts;
 
     while( 1 ) {
             res = read( sdb, buffer, sizeof( buffer ) - 1 );

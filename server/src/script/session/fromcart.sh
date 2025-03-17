@@ -1,27 +1,30 @@
 #!/bin/bash
 
-sda=$1
+ids=$1
 filmname=$2
+number=$3
 
 declare -i counter=1
 declare -i status=0
 
 IFS=":"
-while read film number; do
+while read film num available; do
     if [[ $filmname == $film ]]; then
-        sed -i ${counter}d database/cart$sda
         status=1
+        sed -i ${counter}d database/cart$ids
+        (( diff = num - number ))
+        if (( diff != 0 )); then
+            echo "$film":$diff:$available >> database/cart$ids
+        fi
+        break
     fi
     (( counter = counter + 1 ))
-done < database/cart$sda
+done < database/cart$ids
 
 if (( status == 1 )); then
-    line=$( cat database/cart$sda | wc -l )
+    line=$( cat database/cart$ids | wc -l )
 
     if (( line == 0 )); then
-        rm database/cart$sda
+        rm database/cart$ids
     fi
-    exit 0
 fi
-
-exit 1

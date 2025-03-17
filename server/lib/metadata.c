@@ -4,23 +4,24 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-unsigned int rds = 0; // numero lettori che accedono al file signed.dat.
-
+// numero lettori che accedono al file signed.dat.
+unsigned int rds = 0;
 // semaforo per assicurare che i lettori non accedino nello stesso
 // momento durante l'aggiornamento della variabile rscount.
-pthread_mutex_t mts = PTHREAD_MUTEX_INITIALIZER;
+semaphore mts = PTHREAD_MUTEX_INITIALIZER;
 // semaforo per assicurare la mutua esclusione per i processi scrittori
 // che accedono al file signed.dat.
-pthread_mutex_t wrts = PTHREAD_MUTEX_INITIALIZER;
+semaphore wrts = PTHREAD_MUTEX_INITIALIZER;
 
-void writer( char *command, pthread_mutex_t mutex ) {
+void writer( char *command, semaphore mutex ) {
 
     pthread_mutex_lock( &mutex );
     system( command ); /* Sezione critica */
     pthread_mutex_unlock( &mutex );
 }
 
-unsigned char reader( char *command, pthread_mutex_t mutex, pthread_mutex_t write, unsigned int readers ) {
+unsigned char reader( char *command, semaphore mutex, semaphore write, unsigned int readers ) {
+
     unsigned char res;
 
     pthread_mutex_lock( &mutex );
