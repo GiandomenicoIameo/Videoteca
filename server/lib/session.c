@@ -139,10 +139,11 @@ void additem( int sdb, char *body ) {
 
     snprintf( command, sizeof( command ), "script/session/addcart.sh %d \"%s\"" ,
                 sdb, filmname );
-    if( system( command ) )
-        strcpy( body, "Articolo presente nel carrello" );
-    else
-        strcpy( body, "Articolo aggiunto al carrello" );
+    if( system( command ) ) {
+            strcpy( body, "Articolo presente nel carrello" );
+    } else {
+            strcpy( body, "Articolo aggiunto al carrello" );
+    }
 }
 
 void delitem( int sdb, char *body ) {
@@ -162,10 +163,11 @@ void delitem( int sdb, char *body ) {
     snprintf( command, sizeof( command ), "script/session/fromcart.sh %d \"%s\"" ,
                 sdb, filmname );
 
-    if( system( command ) )
-        strcpy( body, "Articolo non presente nel carrello" );
-    else
-        strcpy( body, "Articolo rimosso dal carrello" );
+    if( system( command ) ) {
+            strcpy( body, "Articolo non presente nel carrello" );
+    } else {
+            strcpy( body, "Articolo rimosso dal carrello" );
+    }
 }
 
 void returned( char *body ) {
@@ -176,13 +178,13 @@ void returned( char *body ) {
     strcpy( temp, filmname );
     search( temp );
 
-    if ( strcmp( temp, "Film trovato") )
-        strcpy( body, "Film non trovato" );
-    else {
-        strcpy( body, "Restituzione approvata" );
-        snprintf( command, sizeof( command ), "script/session/returned.sh \"%s\" %d" ,
-                filmname, atoi( number ) );
-        // Processo scrittore che accede al file movies.dat.
-        writer( command, wrtm );
+    if ( strcmp( temp, "Film trovato") ) {
+            strcpy( body, "Film non trovato" );
+    } else {
+            strcpy( body, "Restituzione approvata" );
+            snprintf( command, sizeof( command ), "script/session/returned.sh \"%s\" %d" ,
+                    filmname, atoi( number ) );
+            // Processo scrittore che accede al file movies.dat.
+            writer( command, wrtm );
     }
 }
