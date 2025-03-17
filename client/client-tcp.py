@@ -1,12 +1,6 @@
 from socket import *
 import subprocess
-
-def send( socket, message ):
-
-    socket.send( message.encode() )
-    print( 'Messaggio inviato!' )
-
-    return socket.recv( 1024 )
+import sys
 
 def authentication( head ):
 
@@ -39,8 +33,6 @@ def session( head, action ):
 
 def release( head, action ):
 
-    if action == 1:
-        return authentication( head )
     return head + ''
 
 def search( head ):
@@ -87,10 +79,18 @@ while True:
         message = head + body
         break
 
-    response = send( client_socket, message )
+    client_socket.send( message.encode() )
+    response = client_socket.recv( 1024 )
+
+    if not response:
+         print( 'Connessione chiusa dal server!' )
+         sys.exit( 0 )
+
     print( 'Messaggio ricevuto dal server:', response.decode() )
 
-response = send( client_socket, message )
+client_socket.send( message.encode() )
+response = client_socket.recv( 1024 )
+
 print( 'Messaggio ricevuto dal server:', response.decode() )
 
 client_socket.close()
