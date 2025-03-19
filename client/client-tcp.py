@@ -2,12 +2,15 @@ from socket import *
 import subprocess
 import sys
 
-def authentication( head ):
+def authentication( head, action ):
 
-    username = input( 'Username: ' )
-    password = input( 'Password: ')
+    if action == 0 or action == 1:
+        username = input( 'Username: ' )
+        password = input( 'Password: ')
+        message = head + username + ' ' + password
+    else:
+        message = head + ''
 
-    message = head + username + ' ' + password
     return message
 
 def session( head, action ):
@@ -29,7 +32,8 @@ def session( head, action ):
     elif action == 3: # Richiesta di restituzione
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
-        message = head + filmname + '\0' + number + '\0'
+        date     = input( 'Inserisci data: ' )
+        message = head + filmname + '\0' + number + '\0' + date + '\0'
     elif action == 4: # Richiesta di checkout
         message = head + ''
     return message
@@ -69,7 +73,7 @@ while True:
     head = str( method ) + str( action )
 
     if method == 0:
-        message = authentication( head )
+        message = authentication( head, action )
     elif method == 1:
         message = session( head, action )
     elif method == 2:
