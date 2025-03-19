@@ -4,12 +4,13 @@
 
 int session( int sdb, int action, char *body );
 
-void additem( int sdb, char *body );
-void delitem( int sdb, char *body );
+void preadd( int uid, char *body );
+void delitem( int uid, char *body );
 
 void takeout( char *body, char *filmname, char *number, char *date );
-unsigned int checkmovie( char *filmname, char *number, char *date );
-void rentest( char *body );
-void returned( char *body );
+unsigned int rentalchk( char *filmname, char *number, char *date );
+void rentest( int uid, char *body );
 
-void checkout( int sdb, char *body );
+void returntest( int uid, char *body );
+
+void checkout( int uid, char *body );

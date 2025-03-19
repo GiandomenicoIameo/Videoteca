@@ -8,13 +8,4 @@
 # alla password nel file connessi.dat e il carrello dell'utente.
 
 ids=$1
-
-declare -i line=1
-declare -i status=0
-
-while IFS=":" read user passwd id; do
-    if [[ $ids -eq $id ]]; then
-        sed -i ${line}d database/signed.dat
-    fi
-    (( line = line + 1 ))
-done < database/signed.dat
+sed -i /.'*':$ids/d database/signed.dat

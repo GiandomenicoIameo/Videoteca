@@ -1,8 +1,8 @@
 #!/bin/bash
 
-sda=$1
+id=$1
 
-if [[ -e database/cart$sda ]]; then
-    rm database/cart$sda
+if [[ -e database/cart$id ]]; then
+    rm database/cart$id
 fi
 

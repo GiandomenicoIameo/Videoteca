@@ -47,7 +47,7 @@ void signout( int sdb, char *body ) {
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-            "script/release/disconnect.sh %d",sdb );
+              "sed -ri 's/(.*:)%d/\\10/' database/signed.dat", sdb );
     // Processo scrittore che accede al file signed.dat
     writer( command, wrts );
     strcpy( body, "Account disconnesso!" );
@@ -57,7 +57,7 @@ void cancel( int sdb, char *body ) {
 
     // La funzione cancel poggia sull'assunto che l'utente che desidera
     // cancellare il suo account abbia effettuato in un precedente momento
-    // l'accesso a quest'ultimo.
+    // l'accesso a quest'ultimo.id = system( command );
 
     extern semaphore wrts;
 
@@ -67,9 +67,9 @@ void cancel( int sdb, char *body ) {
               "script/release/cancel.sh %d", sdb );
     // Processo scrittore che accede al file signed.dat.
     writer( command, wrts );
-    // Processo scrittore che accede al file connessi.dat.
+
     snprintf( command, sizeof( command ),
-              "script/release/removecart.sh %d", sdb );
+              "script/release/removecart.sh %d", recuid( sdb ) );
     system( command );
     strcpy( body, "Account cancellato!" );
 }

@@ -1,22 +1,13 @@
 #!/bin/bash
 
-ids=$1
-filmname=$2
+uid=$1; filmname=$2
+number=$3; real=$4
 
-number=$3
-real=$4
-
-if ! [[ -e database/cart$ids ]]; then
-    touch database/cart$ids
-fi
-
-declare -i line=1
-
-while IFS=":" read film num available; do
-    if [[ $film == $filmname ]]; then
-        sed -i ${line}d database/cart$ids
-        break
+if ! [[ -e database/cart$uid ]]; then
+    touch database/cart$uid
+    echo "$filmname":$number:$real >> database/cart$uid
+else
+    if grep -q ^"$filmname": database/cart$uid; then
+        sed -i s/"$filmname":'.*':$real/"$filmname":$number:$real database/cart$uid
     fi
-done < database/cart$ids
-
-echo "$filmname":$number:$real >> database/cart$ids
+fi

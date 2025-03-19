@@ -16,10 +16,6 @@ semaphore mtm = PTHREAD_MUTEX_INITIALIZER;
 semaphore wrtm = PTHREAD_MUTEX_INITIALIZER;
 // Il mutex viene inizializzato una sola volta dalla libreria POSIX.
 
-unsigned int rdc = 0;
-semaphore mtc = PTHREAD_MUTEX_INITIALIZER;
-semaphore wrtc = PTHREAD_MUTEX_INITIALIZER;
-
 int session( int sdb, int action, char *body ) {
 
     // Ogni funzione nel costrutto switch poggia sull'assunto
@@ -34,19 +30,19 @@ int session( int sdb, int action, char *body ) {
     } else {
             switch( action ) {
                     case 0:
-                            rentest( body );
+                            rentest( recuid( sdb ), body );
                             break;
                     case 1:
-                            additem( sdb, body );
+                            preadd( recuid( sdb ), body );
                             break;
                     case 2:
-                            delitem( sdb, body );
+                            delitem( recuid( sdb ), body );
                             break;
                     case 3:
-                            returned( body );
+                            returntest( recuid( sdb ), body );
                             break;
                     case 4:
-                            checkout( sdb, body );
+                            checkout( recuid( sdb ), body );
                             break;
                     default:
                             result = -1;
@@ -77,106 +73,112 @@ void takeout( char *body, char *filmname, char *number, char *date ) {
     }
 }
 
-unsigned int checkmovie( char *filmname, char *number, char *date ) {
+unsigned int rentalchk( char *filmname, char *number, char *date ) {
 
-    unsigned char status;
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/available.sh \"%s\" %d",
-              filmname, atoi( number ) );
+              "script/session/rentalchk.sh \"%s\" %d \"%s\"",
+              filmname, atoi( number ), date );
     // Processo lettore che accede al file movies.dat.
-    status = reader( command, mtm, wrtm, rdm );
-
-    if( !status ) {
-            snprintf( command, sizeof( command ),
-                      "script/session/date.sh %s", date );
-
-            if ( !WEXITSTATUS( system( command ) ) ) {
-                    return 0;
-            } else {
-                    return 1;
-            }
-    } else if( status == 1 ) {
-            return 2;
-    } else {
-            return 3;
-    }
+    return reader( command, mtm, wrtm, rdm );
 }
 
-void rentest( char *body ) {
+void rentest( int uid, char *body ) {
 
-    void rent( char *filmname, int number );
+    void rent( int uid, char *filmname, int number, char *date );
     // Per il momento il noleggio è basato solo sulla data di restituizione,
     // nome del film e quantità disponibile.
 
-    char filmname[ 40 ], number[ 5 ], date[ 20 ];
+    char filmname[ 40 ], number[ 5 ],
+             date[ 20 ];
+
     takeout( body, filmname, number, date );
 
-    switch( checkmovie( filmname, number, date ) ) {
+    // Non esiste il caso default poiché si è certi che tutte le possibili
+    // opzioni siano già coperte dai vari case.
+    switch( rentalchk( filmname, number, date ) ) {
             case 0:
-                    rent( filmname, atoi( number ) );
-                    strcpy( body, "Noleggio approvato" );
+                    rent( uid, filmname, atoi( number ), date );
+                    strcpy( body, "Noleggio approvato!" );
                     break;
             case 1:
-                    strcpy( body, "Data non valida" );
+                    strcpy( body, "Data non valida!" );
                     break;
             case 2:
-                    strcpy( body, "Quantità non disponibile" );
+                    strcpy( body, "Quantità non disponibile!" );
                     break;
-            default:
-                    strcpy( body, "Film non trovato" );
+            case 3:
+                    strcpy( body, "Film non trovato!" );
                     break;
     }
 }
 
-void rent( char *filmname, int number ) {
+void rent( int uid, char *filmname, int number, char *date ) {
 
-    void update( char *filmname );
+    void updatecart( int uid, char *filmname );
 
     extern semaphore wrtm;
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/rent.sh \"%s\" %d" ,
+              "script/session/rent.sh \"%s\" %d",
               filmname, number );
     // Processo scrittore che accede al file movies.dat.
     writer( command, wrtm );
-    update( filmname );
+
+    snprintf( command, sizeof( command ),
+              "script/session/addrent.sh %d \"%s\" %d \"%s\"",
+              uid, filmname, number, date );
+    system( command );
+    updatecart( uid, filmname );
 }
 
-void additem( int sdb, char *body ) {
+void preadd( int uid, char *body ) {
+
+    void additem( int uid, char *filmname, int eamount );
 
     unsigned int res;
     char filmname[ 40 ], number[ 5 ], command[ 100 ];
 
     takeout( body, filmname, number, NULL );
 
-    snprintf( command, sizeof( command ), "script/session/available.sh \"%s\" %d",
+    snprintf( command, sizeof( command ),
+              "script/session/checkmovie.sh \"%s\" %d",
               filmname, atoi( number ) );
     res = reader( command, mtm, wrtm, rdm );
 
-    if ( res == 2 ) {
-            strcpy( body, "Film non trovato!" );
-    } else if( res == 1 ) {
-            strcpy( body, "Quantità non disponibile!" );
-    } else {
-            snprintf( command, sizeof( command ), "script/search/number.sh \"%s\"",
-                      filmname );
-            res = reader( command, mtm, wrtm, rdm );
-
-            snprintf( command, sizeof( command ),
-                      "script/session/addcart.sh %d \"%s\" %d %d",
-                      sdb, filmname, atoi( number ), res );
-            // Processo che accede al proprio carrello e agisce come processo
-            // lettore.
-            reader( command, mtc, wrtc, rdc );
-
-            strcpy( body, "Articolo/i aggiunto al carrello!" );
+    switch( res ) {
+            case 0:
+                    additem( uid, filmname, atoi( number ) );
+                    strcpy( body, "Articolo/i aggiunto al carrello!" );
+                    break;
+            case 1:
+                    strcpy( body, "Quantità non disponibile!" );
+                    break;
+            case 2:
+                    strcpy( body, "Film non trovato!" );
+                    break;
     }
 }
 
-void delitem( int sdb, char *body ) {
+void additem( int uid, char *filmname, int eamount ) {
+
+    char command[ 100 ];
+    unsigned int ramount;
+
+    snprintf( command, sizeof( command ), "script/search/number.sh \"%s\"",
+                      filmname );
+    // Processo lettore che accede al file movies.dat
+    ramount = reader( command, mtm, wrtm, rdm );
+
+    snprintf( command, sizeof( command ),
+                      "script/session/addcart.sh %d \"%s\" %d %d",
+                      uid, filmname, eamount, ramount );
+    system( command );
+}
+
+void delitem( int uid, char *body ) {
 
     unsigned int res;
     char filmname[ 40 ], number[ 5 ], command[ 100 ];
@@ -184,7 +186,7 @@ void delitem( int sdb, char *body ) {
     takeout( body, filmname, number, NULL );
 
     snprintf( command, sizeof( command ), "script/session/searchitem.sh %d \"%s\" %d",
-              sdb, filmname, atoi( number ) );
+              uid, filmname, atoi( number ) );
     res = reader( command, mtm, wrtm, rdm );
 
     if ( res == 2 ) {
@@ -194,54 +196,76 @@ void delitem( int sdb, char *body ) {
     } else {
             snprintf( command, sizeof( command ),
                       "script/session/fromcart.sh %d \"%s\" %d",
-                      sdb, filmname, atoi( number ) );
+                      uid, filmname, atoi( number ) );
             // Processo che accede al proprio carrello e agisce come processo
             // lettore.
-            reader( command, mtc, wrtc, rdc );
+            system( command );
             strcpy( body, "Articolo/i rimosso dal carrello!" );
     }
 }
 
-void returned( char *body ) {
+void returntest( int uid, char *body ) {
 
-        void update( char *filmname );
+    void returned( int uid, char *filmname, int number, char *date );
+    void updatecart( int uid, char *filmname );
 
-        char filmname[ 40 ], temp[ 40 ], number[ 5 ], command[ 100 ];
-        takeout( body, filmname, number, NULL );
+    char filmname[ 40 ], number[ 5 ],
+             date[ 20 ], command[ 100 ];
 
-        strcpy( temp, filmname );
-        search( temp );
+    takeout( body, filmname, number, date );
 
-        if ( !strcmp( temp, "Film trovato") ) {
-                strcpy( body, "Restituzione approvata" );
-                snprintf( command, sizeof( command ),
-                          "script/session/returned.sh \"%s\" %d" ,
-                          filmname, atoi( number ) );
-                // Processo scrittore che accede al file movies.dat.
-                writer( command, wrtm );
-                update( filmname );
-        } else {
-                strcpy( body, "Film non trovato" );
-        }
+    snprintf( command, sizeof( command ),
+              "script/session/returnchk.sh %d \"%s\" %d \"%s\"",
+              uid, filmname, atoi( number ), date );
+
+    switch( WEXITSTATUS( system( command ) ) ) {
+            case 0:
+                    returned( uid, filmname, atoi( number ), date );
+                    updatecart( uid, filmname );
+                    strcpy( body, "Restituzione approvata!" );
+                    break;
+            case 1:
+                    strcpy( body, "Quantità non disponibile!" );
+                    break;
+            case 2:
+                    strcpy( body, "Data inesatta!" );
+                    break;
+            case 3:
+                    strcpy( body, "Film non noleggiato!" );
+                    break;
+    }
 }
 
-void checkout( int sdb, char *body ) {
+void returned( int uid, char *filmname, int number, char *date ) {
 
-    unsigned int res;
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/checkout.sh %d", sdb );
-    res = WEXITSTATUS( system( command ) );
+              "script/session/updatemovies.sh \"%s\" %d" ,
+              filmname, number );
+    // Processo scrittore che accede al file movies.dat.
+    writer( command, wrtm );
 
-    if ( res ) {
+    snprintf( command, sizeof( command ),
+              "script/session/delrented.sh %d \"%s\" %d \"%s\"",
+              uid, filmname, number, date );
+    system( command );
+}
+
+void checkout( int uid, char *body ) {
+
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ),
+              "script/session/checkout.sh %d", uid );
+    if ( WEXITSTATUS( system( command ) ) ) {
             strcpy( body, "Checkout riuscito!" );
     } else {
             strcpy( body, "Checkout fallito!" );
     }
 }
 
-void update( char *filmname ) {
+void updatecart( int uid, char *filmname ) {
 
     char command[ 100 ];
     unsigned int number;
@@ -252,7 +276,7 @@ void update( char *filmname ) {
     number = reader( command, mtm, wrtm, rdm );
 
     snprintf( command, sizeof( command ),
-              "script/session/update.sh \"%s\" %d", filmname, number );
-    // Processo che accede a tutti i carrelli e agisce come processo scrittore.
-    writer( command, wrtc );
+              "script/session/updatecart.sh %d \"%s\" %d",
+              uid, filmname, number );
+    system( command );
 }

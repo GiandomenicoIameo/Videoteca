@@ -45,9 +45,16 @@ void signin( int sdb, char *body ) {
 
     if ( recorded( username, password ) ) {
             // Quest'ultimo controllo verifica se esiste un account registrato presso il
-            // server identificato dalla coppia ( username, password ) specificata dal client.
-            snprintf( command, sizeof( command ), "script/authentication/connect.sh %d \"%s\" \"%s\"",
-                        sdb, username, password );
+            // server, identificato dalla coppia ( username, password ) specificata dal client.
+            snprintf( command, sizeof( command ),
+                      "sed -ri 's/(.*:%s:%s:)0/\\1%d/' database/signed.dat",
+                      username, password, sdb );
+            // Nel precedente comando ho utilizzato il carattere escape( \ ) per inibire l'effetto
+            // del carattere speciale \1. In questo modo \\ viene interpretato come un singolo
+            // carattere \. Il comando originale sed è:
+            //
+            //                  sed -ri 's/(.*:%s:%s:)0/\1%d/' database/signed.dat.
+
             // Processo lettore scrittore che accede al file connessi.dat.
             writer( command, wrts );
             strcpy( body, "Accesso consentito!" );

@@ -2,18 +2,18 @@
 
 filmname=$1
 number=$2
+date=$3
 
-IFS=":"
-while read film num; do
+while IFS=":" read film num; do
 
     if [[ $filmname == $film ]]; then
         if (( $number >= 0 )) && (( $number <= $num )); then
-            exit 0
+            script/session/date.sh $date; exit $?
         else
-            exit 1
+            exit 2
         fi
     fi
 
 done < database/movies.dat
 
-exit 2
+exit 3

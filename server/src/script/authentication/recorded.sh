@@ -7,7 +7,7 @@
 username=$1
 password=$2
 
-while IFS=":" read user pass ids; do
+while IFS=":" read uid user pass ids; do
     if [[ $username == $user ]] && [[ $password == $pass ]] && [[ $ids -eq 0 ]]; then
         exit 1
     fi

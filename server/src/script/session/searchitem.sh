@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ids=$1
+uid=$1
 filmname=$2
 number=$3
 
@@ -15,6 +15,6 @@ while read film num available; do
         fi
     fi
 
-done < database/cart$ids
+done < database/cart$uid
 
 exit 2

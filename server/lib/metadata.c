@@ -44,7 +44,16 @@ int connected( int sdb ) {
     char command[ 100 ];
     snprintf( command, sizeof( command ),
               "script/metadata/connected.sh %d", sdb );
-    // Processo lettore
+    // Processo lettore che accede al file signed.dat.
+    return reader( command, mts, wrts, rds );
+}
+
+unsigned int recuid( int sdb ) {
+
+    char command[ 100 ];
+    snprintf( command, sizeof( command ),
+              "script/metadata/recuid.sh %d", sdb );
+    // Processo lettore che accede al file signed.dat.
     return reader( command, mts, wrts, rds );
 }
 

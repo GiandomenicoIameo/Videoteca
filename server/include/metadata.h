@@ -5,6 +5,7 @@
     #define semaphore pthread_mutex_t
 
     void extract( char *body, char *username, char *password );
+    unsigned int recuid( int sdb );
     int connected( int sdb );
 
     void writer( char *command, semaphore mutex );

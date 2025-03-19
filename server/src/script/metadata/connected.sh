@@ -8,8 +8,8 @@
 
 ids=$1
 
-while IFS=":" read user pass id; do
-    if [[ $ids -eq $id ]]; then
+while IFS=":" read id user pass sid; do
+    if [[ $ids -eq $sid ]]; then
         exit 1
     fi
 done < database/signed.dat

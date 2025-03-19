@@ -100,7 +100,7 @@ void handler( int vsignal ) {
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/release/disconnectall.sh" );
+              "sed -ri 's/(.*:).*/\\10/' database/signed.dat" );
     // Processo scrittore che accede al file signed.dat.
     writer( command, wrts );
 
@@ -154,7 +154,7 @@ void *runner( void *sda ) {
                     // viene disconnesso.
                     if ( connected( sdb ) ) {
                             snprintf( command, sizeof( command ),
-                                      "script/release/disconnect.sh %d",sdb );
+                                "sed -ri 's/(.*:)%d/\\10/' database/signed.dat", sdb );
                             // Processo scrittore che accede al file connessi.dat.
                             writer( command, wrts );
                     }
@@ -217,7 +217,7 @@ void response( int result, char *body, int *sdb ) {
     // Il server non ha compreso la richiesta del client e, in risposta, invia
     // un codice corrispondende a tale evento.
     if ( result < 0 ) {
-            strcpy( message, "404 Bad Request:" );
+            strcpy( message, "404 Bad Request" );
     // Il server ha compreso e accettato con successo la richiesta del client
     // e, in risposta, invia una conferma dell'avvenuta comprensione.
     } else {
