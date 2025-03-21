@@ -2,10 +2,10 @@
 
 filmname=$1; number=$2
 
-while IFS=":" read name num; do
+while IFS=":" read name ramount; do
     if [[ $filmname == $name ]]; then
-        (( diff = num - number ))
-        sed -i s/"$name":$num/"$name":$diff/ database/movies.dat
+        (( diff = ramount - number ))
+        sed -i s/"$name":$ramount/"$name":$diff/ database/movies.dat
         break
     fi
 done < database/movies.dat

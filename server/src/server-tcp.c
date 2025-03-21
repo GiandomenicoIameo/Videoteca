@@ -221,9 +221,10 @@ void response( int result, char *body, int *sdb ) {
     // Il server ha compreso e accettato con successo la richiesta del client
     // e, in risposta, invia una conferma dell'avvenuta comprensione.
     } else {
-            strcpy( message, "200 OK:" );
+            //strcpy( message, "200 OK:" );
     }
-    strcat( message, body );
+    strcpy( message, body );
+    //strcat( message, body );
     // assemble( message, type, action, body );
     message[ strlen( message ) + 1 ] = '\0';
 

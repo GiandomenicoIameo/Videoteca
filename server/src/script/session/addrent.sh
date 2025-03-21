@@ -11,7 +11,7 @@ else
     while IFS=":" read name num time; do
         if [[ $filmname == $name ]] && [[ $date == $time ]]; then
             (( sum = num + number ))
-            sed -i s/"$name":$num:$time/"$name":$sum:$time/ database/rented$uid
+            sed -i s/"$name":$num:"$time"/"$name":$sum:"$time"/ database/rented$uid
             status=1; break
         fi
     done < database/rented$uid

@@ -5,6 +5,7 @@
 #include <stdlib.h> // Qui è stata definita la funzione system()
 #include <stdio.h>  // Qui la funzione snprintf
 #include <pthread.h>
+#include <zlib.h>
 
 // Scegliere altri nomi per le variabili.
 unsigned int rdm = 0; // lettori del file movies.dat.
@@ -36,13 +37,16 @@ int session( int sdb, int action, char *body ) {
                             preadd( recuid( sdb ), body );
                             break;
                     case 2:
-                            delitem( recuid( sdb ), body );
+                            predel( recuid( sdb ), body );
                             break;
                     case 3:
                             returntest( recuid( sdb ), body );
                             break;
                     case 4:
                             checkout( recuid( sdb ), body );
+                            break;
+                    case 5:
+                            show( recuid( sdb ), body );
                             break;
                     default:
                             result = -1;
@@ -86,9 +90,10 @@ unsigned int rentalchk( char *filmname, char *number, char *date ) {
 
 void rentest( int uid, char *body ) {
 
-    void rent( int uid, char *filmname, int number, char *date );
     // Per il momento il noleggio è basato solo sulla data di restituizione,
     // nome del film e quantità disponibile.
+
+    void rent( int uid, char *filmname, int number, char *date );
 
     char filmname[ 40 ], number[ 5 ],
              date[ 20 ];
@@ -136,72 +141,87 @@ void rent( int uid, char *filmname, int number, char *date ) {
 
 void preadd( int uid, char *body ) {
 
-    void additem( int uid, char *filmname, int eamount );
+    void additem( int uid, char *filmname, int eamount, char *date );
 
-    unsigned int res;
-    char filmname[ 40 ], number[ 5 ], command[ 100 ];
+    char filmname[ 40 ], eamount[ 5 ],
+             date[ 20 ];
 
-    takeout( body, filmname, number, NULL );
+    takeout( body, filmname, eamount, date );
 
-    snprintf( command, sizeof( command ),
-              "script/session/checkmovie.sh \"%s\" %d",
-              filmname, atoi( number ) );
-    res = reader( command, mtm, wrtm, rdm );
-
-    switch( res ) {
+    switch( rentalchk( filmname, eamount, date ) ) {
             case 0:
-                    additem( uid, filmname, atoi( number ) );
-                    strcpy( body, "Articolo/i aggiunto al carrello!" );
+                    additem( uid, filmname, atoi( eamount ), date );
+                    strcpy( body, "Articolo/i aggiunto al carrello" );
                     break;
             case 1:
-                    strcpy( body, "Quantità non disponibile!" );
+                    strcpy( body, "Data non valida!" );
                     break;
             case 2:
+                    strcpy( body, "Quantità non disponibile!" );
+                    break;
+            case 3:
                     strcpy( body, "Film non trovato!" );
                     break;
     }
 }
 
-void additem( int uid, char *filmname, int eamount ) {
+void additem( int uid, char *filmname, int eamount, char *date ) {
 
     char command[ 100 ];
     unsigned int ramount;
 
-    snprintf( command, sizeof( command ), "script/search/number.sh \"%s\"",
+    snprintf( command, sizeof( command ), "script/search/ramount.sh \"%s\"",
                       filmname );
-    // Processo lettore che accede al file movies.dat
+    // Processo lettore che accede al file movies.dat.
     ramount = reader( command, mtm, wrtm, rdm );
 
     snprintf( command, sizeof( command ),
-                      "script/session/addcart.sh %d \"%s\" %d %d",
-                      uid, filmname, eamount, ramount );
+                      "script/session/addcart.sh %d \"%s\" %d %d \"%s\"",
+                      uid, filmname, eamount, ramount, date );
     system( command );
 }
 
-void delitem( int uid, char *body ) {
+void predel( int uid, char *body ) {
+
+    void delitem( int uid, char *filmname, int number );
 
     unsigned int res;
-    char filmname[ 40 ], number[ 5 ], command[ 100 ];
 
-    takeout( body, filmname, number, NULL );
+    char filmname[ 40 ], number[ 5 ],
+             date[ 20 ], command[ 100 ];
 
-    snprintf( command, sizeof( command ), "script/session/searchitem.sh %d \"%s\" %d",
-              uid, filmname, atoi( number ) );
+    takeout( body, filmname, number, date );
+
+    snprintf( command, sizeof( command ),
+              "script/session/removechk.sh %d \"%s\" %d \"%s\"",
+              uid, filmname, atoi( number ), date );
+
     res = reader( command, mtm, wrtm, rdm );
 
-    if ( res == 2 ) {
-            strcpy( body, "Film non trovato!" );
-    } else if( res == 1 ) {
-            strcpy( body, "Valore inserito non valido!" );
-    } else {
-            snprintf( command, sizeof( command ),
-                      "script/session/fromcart.sh %d \"%s\" %d",
-                      uid, filmname, atoi( number ) );
-            // Processo che accede al proprio carrello e agisce come processo
-            // lettore.
-            system( command );
-            strcpy( body, "Articolo/i rimosso dal carrello!" );
+    switch( res ) {
+            case 0:
+                    delitem( uid, filmname, atoi( number ) );
+                    strcpy( body, "Articolo/i rimosso dal carrello!" );
+                    break;
+            case 1:
+                    strcpy( body, "Valore inserito non valido!" );
+                    break;
+            case 2:
+                    strcpy( body, "La data non corrisponde!" );
+                    break;
+            case 3:
+                    strcpy( body, "Film non trovato!" );
     }
+}
+
+void delitem( int uid, char *filmname, int number ) {
+
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ),
+              "script/session/fromcart.sh %d \"%s\" %d",
+              uid, filmname, number );
+     system( command );
 }
 
 void returntest( int uid, char *body ) {
@@ -254,29 +274,67 @@ void returned( int uid, char *filmname, int number, char *date ) {
 
 void checkout( int uid, char *body ) {
 
+    void rentall( int uid );
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
               "script/session/checkout.sh %d", uid );
     if ( WEXITSTATUS( system( command ) ) ) {
             strcpy( body, "Checkout riuscito!" );
+            rentall( uid );
     } else {
             strcpy( body, "Checkout fallito!" );
     }
 }
 
+void rentall( int uid ) {
+
+    char command[ 100 ];
+    snprintf( command, sizeof( command ), "script/session/rentall.sh %d",
+             uid );
+    writer( command, wrtm );
+
+    snprintf( command, sizeof( command ), "script/session/up.sh %d",
+             uid );
+    system( command );
+}
+
+void show( int uid, char *body ) {
+
+    FILE *fpointer;
+	char buffer[ 1024 ], command[ 100 ];
+
+    snprintf( command, sizeof( command ),
+              "script/session/compress.sh %d", uid );
+    system( command );
+
+    snprintf( command, sizeof( command ),
+              "script/session/tohex.sh %d", uid );
+
+	fpointer = popen( command, "r" );
+	if ( fpointer == NULL ) {
+			perror( "Errore nell'esecuzione dello script" );
+            pthread_exit( ( void * )1 );
+	} else {
+			while ( fgets( buffer, sizeof( buffer ), fpointer ) != NULL );
+
+			pclose( fpointer );
+			strcpy( body, buffer );
+	}
+}
+
 void updatecart( int uid, char *filmname ) {
 
     char command[ 100 ];
-    unsigned int number;
+    unsigned int ramount;
 
     snprintf( command, sizeof( command ),
-              "script/search/number.sh \"%s\"", filmname );
+              "script/search/ramount.sh \"%s\"", filmname );
     // Processo lettore che accede al file movies.dat.
-    number = reader( command, mtm, wrtm, rdm );
+    ramount = reader( command, mtm, wrtm, rdm );
 
     snprintf( command, sizeof( command ),
               "script/session/updatecart.sh %d \"%s\" %d",
-              uid, filmname, number );
+              uid, filmname, ramount );
     system( command );
 }

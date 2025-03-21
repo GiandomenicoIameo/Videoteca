@@ -1,7 +1,6 @@
 #!/bin/bash
 
-filmname=$1
-number=$2
+filmname=$1; number=$2
 date=$3
 
 while IFS=":" read film num; do

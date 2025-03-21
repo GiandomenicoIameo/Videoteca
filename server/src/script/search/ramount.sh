@@ -2,9 +2,9 @@
 
 filmname=$1
 
-while IFS=":" read name available; do
+while IFS=":" read name ramount; do
     if [[ $filmname == $name ]]; then
-        exit $available
+        exit $ramount
     fi
 done < database/movies.dat
 
