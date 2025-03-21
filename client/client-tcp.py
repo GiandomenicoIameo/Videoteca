@@ -1,6 +1,8 @@
 from socket import *
 import subprocess
 import sys
+import gzip
+import io
 
 def authentication( head, action ):
 
@@ -24,11 +26,13 @@ def session( head, action ):
     elif action == 1: # Aggiungi al carrello
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
-        message = head + filmname + '\0' + number + '\0'
+        date     = input( 'Inserisci data: ' )
+        message = head + filmname + '\0' + number + '\0' + date + '\0'
     elif action == 2: # Rimuovi dal carrello
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
-        message = head + filmname + '\0' + number + '\0'
+        date     = input( 'Inserisci data: ' )
+        message = head + filmname + '\0' + number + '\0' + date + '\0'
     elif action == 3: # Richiesta di restituzione
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
@@ -36,6 +40,9 @@ def session( head, action ):
         message = head + filmname + '\0' + number + '\0' + date + '\0'
     elif action == 4: # Richiesta di checkout
         message = head + ''
+    elif action == 5: # Visualizzazione del carrello
+        message = head + ''
+
     return message
 
 def release( head, action ):
@@ -88,16 +95,24 @@ while True:
     client_socket.send( message.encode() )
     response = client_socket.recv( 1024 )
 
-    if not response:
-         print( 'Connessione chiusa dal server!' )
-         sys.exit( 0 )
+    if method == 1 and action == 5:
+        print( "" )
+        compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
+        try:
+            decompressed_data = gzip.decompress( compressed_data )
+            print( decompressed_data.decode( 'utf-8' ) )
+        except Exception as e:
+            print( f"Errore durante la decompressione: {e}" )
+    else:
+        if not response:
+            print( 'Connessione chiusa dal server!' )
+            sys.exit( 0 )
 
-    print( 'Messaggio ricevuto dal server:', response.decode() )
+        print( 'Messaggio ricevuto dal server:', response.decode() )
 
 client_socket.send( message.encode() )
 response = client_socket.recv( 1024 )
 
 print( 'Messaggio ricevuto dal server:', response.decode() )
-
 client_socket.close()
 print( 'Connessione terminata' )
