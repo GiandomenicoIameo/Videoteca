@@ -2,7 +2,7 @@
 
 filmname=$1
 
-while IFS=":" read name ramount; do
+while IFS=":" read name ramount rentable; do
     if [[ $filmname == $name ]]; then
         exit $ramount
     fi

@@ -7,7 +7,7 @@
 
 filmname=$1
 
-while IFS=":" read name available; do
+while IFS=":" read name available rentable; do
     if [[ $filmname == $name ]]; then
         exit 1
     fi

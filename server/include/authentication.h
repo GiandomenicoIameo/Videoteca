@@ -7,4 +7,5 @@
 int authentication( int sdb, int action, char *body );
 void signin( int sdb, char *body );
 void signup( int sdb, char *body );
+void update( void );
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 uid=$1; filmname=$2
-remount=$3
+ramount=$3
 
 if [[ -e database/cart$uid ]]; then
-    sed -ri 's/('"$filmname"'.*:).*/\1'$remount'/' database/cart$uid
+    sed -ri 's/^('"$filmname"':.*:).*(:.*:.*)$/\1'$ramount'\2/' database/cart$uid
 fi

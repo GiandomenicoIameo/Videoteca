@@ -30,23 +30,29 @@ int session( int sdb, int action, char *body ) {
             strcpy( body, "Non sei connesso!" );
     } else {
             switch( action ) {
-                    case 0:
+                    case 0: // Richiesta di noleggio.
                             rentest( recuid( sdb ), body );
+                            rentable();
                             break;
-                    case 1:
-                            preadd( recuid( sdb ), body );
+                    case 1: // Richiesta di aggiunta al carrello.
+                            setout( recuid( sdb ), body );
+                            // preadd( recuid( sdb ), body );
                             break;
-                    case 2:
-                            predel( recuid( sdb ), body );
+                    // case 2: // Richiesta di rimozione dal carrello.
+                            // predel( recuid( sdb ), body );
                             break;
-                    case 3:
+                    case 2: // Richiesta di restituzione.
                             returntest( recuid( sdb ), body );
+                            rentable();
+                            break;
+                    case 3: // Richiesta di checkout.
+                            checkout( recuid( sdb ), body );
+                            rentable();
                             break;
                     case 4:
-                            checkout( recuid( sdb ), body );
+                            showcart( recuid( sdb ), body );
                             break;
-                    case 5:
-                            show( recuid( sdb ), body );
+                    case 5: showrented( recuid( sdb ), body );
                             break;
                     default:
                             result = -1;
@@ -111,7 +117,7 @@ void rentest( int uid, char *body ) {
                     strcpy( body, "Data non valida!" );
                     break;
             case 2:
-                    strcpy( body, "Quantità non disponibile!" );
+                    strcpy( body, "Quantità non noleggiabile!" );
                     break;
             case 3:
                     strcpy( body, "Film non trovato!" );
@@ -139,6 +145,50 @@ void rent( int uid, char *filmname, int number, char *date ) {
     updatecart( uid, filmname );
 }
 
+void setout( int uid, char *body ) {
+
+    void setup( int uid, char* filmname, int eamount, char *date );
+
+    char filmname[ 40 ], eamount[ 5 ],
+             date[ 20 ];
+
+    takeout( body, filmname, eamount, date );
+
+    switch( rentalchk( filmname, eamount, date ) ) {
+            case 0:
+                    setup( uid, filmname, atoi( eamount ), date );
+                    strcpy( body, "Articolo/i impostato" );
+                    break;
+            case 1:
+                    strcpy( body, "Data non valida!" );
+                    break;
+            case 2:
+                    strcpy( body, "Quantità non noleggiabile!" );
+                    break;
+            case 3:
+                    strcpy( body, "Film non trovato!" );
+                    break;
+    }
+}
+
+void setup( int uid, char* filmname, int eamount, char *date ) {
+
+    char command[ 100 ];
+    unsigned int ramount;
+
+    snprintf( command, sizeof( command ), "script/search/ramount.sh \"%s\"",
+                      filmname );
+    // Processo lettore che accede al file movies.dat.
+    ramount = reader( command, mtm, wrtm, rdm );
+
+    snprintf( command, sizeof( command ),
+                      "script/session/addcart.sh %d \"%s\" %d %d \"%s\"",
+                      uid, filmname, eamount, ramount, date );
+    system( command );
+}
+
+
+/*
 void preadd( int uid, char *body ) {
 
     void additem( int uid, char *filmname, int eamount, char *date );
@@ -157,7 +207,7 @@ void preadd( int uid, char *body ) {
                     strcpy( body, "Data non valida!" );
                     break;
             case 2:
-                    strcpy( body, "Quantità non disponibile!" );
+                    strcpy( body, "Quantità non noleggiabile!" );
                     break;
             case 3:
                     strcpy( body, "Film non trovato!" );
@@ -179,8 +229,9 @@ void additem( int uid, char *filmname, int eamount, char *date ) {
                       "script/session/addcart.sh %d \"%s\" %d %d \"%s\"",
                       uid, filmname, eamount, ramount, date );
     system( command );
-}
+}*/
 
+/*
 void predel( int uid, char *body ) {
 
     void delitem( int uid, char *filmname, int number );
@@ -222,7 +273,7 @@ void delitem( int uid, char *filmname, int number ) {
               "script/session/fromcart.sh %d \"%s\" %d",
               uid, filmname, number );
      system( command );
-}
+}*/
 
 void returntest( int uid, char *body ) {
 
@@ -299,17 +350,19 @@ void rentall( int uid ) {
     system( command );
 }
 
-void show( int uid, char *body ) {
+void showcart( int uid, char *body ) {
+
+    // Capire il significato delle seguenti istruzioni.
 
     FILE *fpointer;
 	char buffer[ 1024 ], command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/compress.sh %d", uid );
+              "script/session/compress.sh cart%d", uid );
     system( command );
 
     snprintf( command, sizeof( command ),
-              "script/session/tohex.sh %d", uid );
+              "script/session/tohex.sh cart%d", uid );
 
 	fpointer = popen( command, "r" );
 	if ( fpointer == NULL ) {
@@ -317,7 +370,6 @@ void show( int uid, char *body ) {
             pthread_exit( ( void * )1 );
 	} else {
 			while ( fgets( buffer, sizeof( buffer ), fpointer ) != NULL );
-
 			pclose( fpointer );
 			strcpy( body, buffer );
 	}
@@ -337,4 +389,28 @@ void updatecart( int uid, char *filmname ) {
               "script/session/updatecart.sh %d \"%s\" %d",
               uid, filmname, ramount );
     system( command );
+}
+
+void showrented( int uid, char *body ) {
+
+    FILE *fpointer;
+	char buffer[ 1024 ], command[ 100 ];
+
+    snprintf( command, sizeof( command ),
+              "script/session/compress.sh rented%d", uid );
+    system( command );
+
+    snprintf( command, sizeof( command ),
+              "script/session/tohex.sh rented%d", uid );
+
+	fpointer = popen( command, "r" );
+	if ( fpointer == NULL ) {
+			perror( "Errore nell'esecuzione dello script" );
+            pthread_exit( ( void * )1 );
+	} else {
+			while ( fgets( buffer, sizeof( buffer ), fpointer ) != NULL );
+
+			pclose( fpointer );
+			strcpy( body, buffer );
+	}
 }

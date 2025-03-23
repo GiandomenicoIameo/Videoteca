@@ -3,7 +3,7 @@
 uid=$1; filmname=$2
 number=$3; time=$4
 
-while IFS=":" read name eamount ramount date; do
+while IFS=":" read name eamount ramount current date; do
 
     if [[ "$filmname" == "$name" ]]; then
         if [[ "$date" == "$time" ]]; then

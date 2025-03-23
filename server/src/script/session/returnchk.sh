@@ -9,7 +9,7 @@ fi
 
 declare -i status=3
 
-while IFS=":" read name num date; do
+while IFS=":" read name num current date; do
     if [[ $filmname == $name ]]; then
         if [[ $time == $date ]]; then
             if (( $number >= 0 )) && (( $number <= $num )); then

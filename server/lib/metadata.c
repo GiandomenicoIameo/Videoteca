@@ -39,6 +39,22 @@ unsigned char reader( char *command, semaphore mutex, semaphore write, unsigned 
     return res;
 }
 
+void rentable( void ) {
+
+    extern semaphore wrtm;
+
+    unsigned int usrc;
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ),
+              "script/metadata/userc.sh" );
+    usrc = reader( command, mts, wrts, rds );
+
+    snprintf( command, sizeof( command ),
+              "script/metadata/rentable.sh %d", usrc );
+    writer( command, wrtm );
+}
+
 int connected( int sdb ) {
 
     char command[ 100 ];

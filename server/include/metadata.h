@@ -8,6 +8,7 @@
     unsigned int recuid( int sdb );
     int connected( int sdb );
 
+    void rentable( void );
     void writer( char *command, semaphore mutex );
     unsigned char reader( char *command, semaphore mutex,
                           semaphore write, unsigned int readers );

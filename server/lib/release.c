@@ -19,9 +19,11 @@ int release( int sdb, int action, char *body ) {
             switch( action ) {
                     case LOGOUT:
                             signout( sdb, body );
+                            rentable();
                     break;
                     case CANCEL:
                             cancel( sdb, body );
+                            rentable();
                     break;
                     default:
                             result = -1;

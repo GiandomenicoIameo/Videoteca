@@ -3,13 +3,13 @@
 uid=$1; filmname=$2
 num=$3; time=$4
 
-while IFS=":" read name number date; do
+while IFS=":" read name number current date; do
     if [[ $filmname == $name ]] && [[ $time = $date ]]; then
         (( diff = number - num ))
         if (( diff != 0 )); then
-            sed -i s/"$name":$number:$date/"$name":$diff:$date/ database/rented$uid
+            sed -i s/"$name":$number:"$current":"$date"/"$name":$diff:"$current":"$date"/ database/rented$uid
         else
-            sed -i /"$name":$number:$date/d database/rented$uid
+            sed -i /"$name":$number:$current:$date/d database/rented$uid
         fi
         break
     fi
@@ -20,5 +20,8 @@ if (( diff == 0 )); then
 
     if (( line == 0 )); then
         rm database/rented$uid
+        if [[ -e database/rented$uid.gz ]]; then
+            rm database/rented$uid.gz
+        fi
     fi
 fi
