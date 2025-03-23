@@ -28,19 +28,19 @@ def session( head, action ):
         number   = input( 'Inserisci quantità: ' )
         date     = input( 'Inserisci data: ' )
         message = head + filmname + '\0' + number + '\0' + date + '\0'
-    elif action == 2: # Rimuovi dal carrello
+    # elif action == 2: # Rimuovi dal carrello
+    #     filmname = input( 'Nome film: ' )
+    #     number   = input( 'Inserisci quantità: ' )
+    #     date     = input( 'Inserisci data: ' )
+    #     message = head + filmname + '\0' + number + '\0' + date + '\0'
+    elif action == 2: # Richiesta di restituzione
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
         date     = input( 'Inserisci data: ' )
         message = head + filmname + '\0' + number + '\0' + date + '\0'
-    elif action == 3: # Richiesta di restituzione
-        filmname = input( 'Nome film: ' )
-        number   = input( 'Inserisci quantità: ' )
-        date     = input( 'Inserisci data: ' )
-        message = head + filmname + '\0' + number + '\0' + date + '\0'
-    elif action == 4: # Richiesta di checkout
+    elif action == 3: # Richiesta di checkout
         message = head + ''
-    elif action == 5: # Visualizzazione del carrello
+    elif action == 4 or action == 5: # Visualizzazione
         message = head + ''
 
     return message
@@ -95,7 +95,7 @@ while True:
     client_socket.send( message.encode() )
     response = client_socket.recv( 1024 )
 
-    if method == 1 and action == 5:
+    if method == 1 and ( action == 4 or action == 5 ):
         print( "" )
         compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
         try:
