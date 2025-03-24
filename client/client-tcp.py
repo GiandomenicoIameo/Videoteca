@@ -6,9 +6,18 @@ import io
 
 def authentication( head, action ):
 
-    if action == 0 or action == 1:
+    if action == 0:
+
         username = input( 'Username: ' )
         password = input( 'Password: ')
+
+        message = head + username + ' ' + password
+
+    elif action == 1:
+
+        username = input( 'Username: ' )
+        password = input( 'Password: ')
+
         message = head + username + ' ' + password
     else:
         message = head + ''
@@ -18,41 +27,49 @@ def authentication( head, action ):
 def session( head, action ):
 
     if action == 0: # richiesta di noleggio
+
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci la quantità: ' )
         date     = input( 'Inserisci data: ' )
 
         message = head + filmname + '\0' + number + '\0' + date + '\0'
-    elif action == 1: # Aggiungi al carrello
+
+    elif action == 1: # Aggiornamento al carrello
+
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
         date     = input( 'Inserisci data: ' )
+
         message = head + filmname + '\0' + number + '\0' + date + '\0'
-    # elif action == 2: # Rimuovi dal carrello
-    #     filmname = input( 'Nome film: ' )
-    #     number   = input( 'Inserisci quantità: ' )
-    #     date     = input( 'Inserisci data: ' )
-    #     message = head + filmname + '\0' + number + '\0' + date + '\0'
+
     elif action == 2: # Richiesta di restituzione
+
         filmname = input( 'Nome film: ' )
         number   = input( 'Inserisci quantità: ' )
         date     = input( 'Inserisci data: ' )
+
         message = head + filmname + '\0' + number + '\0' + date + '\0'
+
     elif action == 3: # Richiesta di checkout
+
         message = head + ''
+
     elif action == 4 or action == 5: # Visualizzazione
+
         message = head + ''
 
     return message
 
 def release( head, action ):
 
-    return head + ''
+    if action == 0 or action == 1:
+        return head + ''
 
 def search( head ):
 
     filmname = input( 'Nome film: ' )
     message = head + filmname
+
     return message
 
 def request():
@@ -81,13 +98,17 @@ while True:
 
     if method == 0:
         message = authentication( head, action )
+
     elif method == 1:
         message = session( head, action )
+
     elif method == 2:
         message = release( head, action )
         break
+
     elif method == 3:
         message = search( head )
+
     else:
         message = head + body
         break
@@ -98,11 +119,14 @@ while True:
     if method == 1 and ( action == 4 or action == 5 ):
         print( "" )
         compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
+
         try:
             decompressed_data = gzip.decompress( compressed_data )
             print( decompressed_data.decode( 'utf-8' ) )
+
         except Exception as e:
             print( f"Errore durante la decompressione: {e}" )
+
     else:
         if not response:
             print( 'Connessione chiusa dal server!' )
