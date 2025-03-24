@@ -38,9 +38,9 @@ int session( int sdb, int action, char *body ) {
                             setout( recuid( sdb ), body );
                             // preadd( recuid( sdb ), body );
                             break;
-                    // case 2: // Richiesta di rimozione dal carrello.
-                            // predel( recuid( sdb ), body );
-                            break;
+                 // case 2: Richiesta di rimozione dal carrello.
+                 //        predel( recuid( sdb ), body );
+                 //        break;
                     case 2: // Richiesta di restituzione.
                             returntest( recuid( sdb ), body );
                             rentable();
@@ -88,7 +88,7 @@ unsigned int rentalchk( char *filmname, char *number, char *date ) {
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/rentalchk.sh \"%s\" %d \"%s\"",
+              "script/session/rental/rentalchk.sh \"%s\" %d \"%s\"",
               filmname, atoi( number ), date );
     // Processo lettore che accede al file movies.dat.
     return reader( command, mtm, wrtm, rdm );
@@ -133,13 +133,13 @@ void rent( int uid, char *filmname, int number, char *date ) {
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/rent.sh \"%s\" %d",
+              "script/session/rental/rent.sh \"%s\" %d",
               filmname, number );
     // Processo scrittore che accede al file movies.dat.
     writer( command, wrtm );
 
     snprintf( command, sizeof( command ),
-              "script/session/addrent.sh %d \"%s\" %d \"%s\"",
+              "script/session/rental/addrent.sh %d \"%s\" %d \"%s\"",
               uid, filmname, number, date );
     system( command );
     updatecart( uid, filmname );
@@ -182,11 +182,10 @@ void setup( int uid, char* filmname, int eamount, char *date ) {
     ramount = reader( command, mtm, wrtm, rdm );
 
     snprintf( command, sizeof( command ),
-                      "script/session/addcart.sh %d \"%s\" %d %d \"%s\"",
+                      "script/session/setup/addcart.sh %d \"%s\" %d %d \"%s\"",
                       uid, filmname, eamount, ramount, date );
     system( command );
 }
-
 
 /*
 void preadd( int uid, char *body ) {
@@ -281,12 +280,12 @@ void returntest( int uid, char *body ) {
     void updatecart( int uid, char *filmname );
 
     char filmname[ 40 ], number[ 5 ],
-             date[ 20 ], command[ 100 ];
+             date[ 20 ], command[ 1000 ];
 
     takeout( body, filmname, number, date );
 
     snprintf( command, sizeof( command ),
-              "script/session/returnchk.sh %d \"%s\" %d \"%s\"",
+              "script/session/restitution/returnchk.sh %d \"%s\" %d \"%s\"",
               uid, filmname, atoi( number ), date );
 
     switch( WEXITSTATUS( system( command ) ) ) {
@@ -312,13 +311,13 @@ void returned( int uid, char *filmname, int number, char *date ) {
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/updatemovies.sh \"%s\" %d" ,
+              "script/session/restitution/updatemovies.sh \"%s\" %d" ,
               filmname, number );
     // Processo scrittore che accede al file movies.dat.
     writer( command, wrtm );
 
     snprintf( command, sizeof( command ),
-              "script/session/delrented.sh %d \"%s\" %d \"%s\"",
+              "script/session/restitution/delrented.sh %d \"%s\" %d \"%s\"",
               uid, filmname, number, date );
     system( command );
 }
@@ -329,27 +328,35 @@ void checkout( int uid, char *body ) {
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/checkout.sh %d", uid );
-    if ( WEXITSTATUS( system( command ) ) ) {
-            strcpy( body, "Checkout riuscito!" );
-            rentall( uid );
-    } else {
-            strcpy( body, "Checkout fallito!" );
+              "script/session/checkout/checkout.sh %d", uid );
+
+    switch( WEXITSTATUS( system( command ) ) ) {
+            case 0:
+                   strcpy( body, "Checkout riuscito!" );
+                   rentall( uid );
+                   break;
+            case 1:
+                   strcpy( body, "Checkout fallito!\nControllare il numero di copie che si desidera noleggiare!\n" );
+                   break;
+            case 2:
+                   strcpy( body, "Checkout fallito!\nContrallare le date di prestito!\n" );
+                   break;
     }
 }
 
 void rentall( int uid ) {
 
     char command[ 100 ];
-    snprintf( command, sizeof( command ), "script/session/rentall.sh %d",
+    snprintf( command, sizeof( command ), "script/session/checkout/rentall.sh %d",
              uid );
     writer( command, wrtm );
 
-    snprintf( command, sizeof( command ), "script/session/up.sh %d",
+    snprintf( command, sizeof( command ), "script/session/checkout/up.sh %d",
              uid );
     system( command );
 }
 
+// chiamare la funzione review
 void showcart( int uid, char *body ) {
 
     // Capire il significato delle seguenti istruzioni.
@@ -358,11 +365,11 @@ void showcart( int uid, char *body ) {
 	char buffer[ 1024 ], command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/compress.sh cart%d", uid );
+              "script/session/review/compress.sh cart%d", uid );
     system( command );
 
     snprintf( command, sizeof( command ),
-              "script/session/tohex.sh cart%d", uid );
+              "script/session/review/tohex.sh cart%d", uid );
 
 	fpointer = popen( command, "r" );
 	if ( fpointer == NULL ) {
@@ -386,7 +393,7 @@ void updatecart( int uid, char *filmname ) {
     ramount = reader( command, mtm, wrtm, rdm );
 
     snprintf( command, sizeof( command ),
-              "script/session/updatecart.sh %d \"%s\" %d",
+              "script/session/setup/updatecart.sh %d \"%s\" %d",
               uid, filmname, ramount );
     system( command );
 }
@@ -397,11 +404,11 @@ void showrented( int uid, char *body ) {
 	char buffer[ 1024 ], command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/session/compress.sh rented%d", uid );
+              "script/session/review/compress.sh rented%d", uid );
     system( command );
 
     snprintf( command, sizeof( command ),
-              "script/session/tohex.sh rented%d", uid );
+              "script/session/review/tohex.sh rented%d", uid );
 
 	fpointer = popen( command, "r" );
 	if ( fpointer == NULL ) {

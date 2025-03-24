@@ -60,7 +60,7 @@ void signin( int sdb, char *body ) {
             // Processo lettore scrittore che accede al file connessi.dat.
             writer( command, wrts );
             snprintf( command, sizeof( command ),
-                      "script/authentication/verify.sh %d", recuid( sdb ) );
+                      "script/authentication/signin/verify.sh %d", recuid( sdb ) );
 
             if ( WEXITSTATUS( system( command ) ) ) {
                     strcpy( body, "Connesso!\n****Date di restituzione scadute!!****" );
@@ -91,7 +91,7 @@ void signup( int sdb, char *body ) {
             strcpy( body, "Username già in uso!" );
     } else {
             snprintf( command, sizeof( command ),
-                      "script/authentication/create.sh %d \"%s\" \"%s\"",
+                      "script/authentication/signup/create.sh %d \"%s\" \"%s\"",
                       sdb, username, password );
             // Processo scrittore che accede al file signed.dat.
             writer( command, wrts );
@@ -109,7 +109,7 @@ unsigned char recorded( char *username, char *password ) {
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/authentication/recorded.sh \"%s\" \"%s\"",
+              "script/authentication/signin/recorded.sh \"%s\" \"%s\"",
               username, password );
     // Processo lettore che accede al file signed.dat.
     return reader( command, mts, wrts, rds );
@@ -124,7 +124,7 @@ unsigned char unique( char *username ) {
 
     char command[ 100 ];
     snprintf( command, sizeof( command ),
-              "script/authentication/unique.sh \"%s\"", username );
+              "script/authentication/signup/unique.sh \"%s\"", username );
     // Processo lettore che accede al file signed.dat
     return reader( command, mts, wrts, rds );
 }

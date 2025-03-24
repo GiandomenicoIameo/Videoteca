@@ -7,9 +7,9 @@ while IFS=":" read film eamount ramount current date; do
     if [[ $filmname == $film ]]; then
         (( namount = eamount - number ))
         if (( namount != 0 )); then
-            sed -i s/"$film":$eamount:$ramount:"$current":"$date"/"$film":$namount:$ramount:"$current":"$date"/ database/cart$uid
+            sed -i s/"$film":$eamount:$ramount:"$date"/"$film":$namount:$ramount:"$date"/ database/cart$uid
         else
-            sed -i /"$film":$eamount:$ramount:"$current":"$date"/d database/cart$uid
+            sed -i /"$film":$eamount:$ramount:"$date"/d database/cart$uid
         fi
         break
     fi
