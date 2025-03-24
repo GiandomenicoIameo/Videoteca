@@ -8,7 +8,7 @@ while IFS=":" read name eamount ramount date; do
         exit 1
     fi
     if (( var == 1 )); then
-            exit 2
+        exit 2
     fi
 done < database/cart$uid
 
