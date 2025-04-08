@@ -1,5 +1,7 @@
 FROM python:latest
 
+RUN apt update && apt install -y python3-pyqt5 python3-pyqt5.qtwebengine python3-pyqt5.qtwebchannel libqt5webkit5-dev 
+
 # Utilizzando il seguente comando, viene creata la directory 
 # di lavoro denominata app, che è una sottodirectory della 
 # directory root (/) nel file system del container.
@@ -10,6 +12,7 @@ WORKDIR /app
 # directory di lavoro del container: /app
 COPY . /app
 
+ENV XDG_RUNTIME_DIR=/tmp/runtime-root
 RUN pip install --root-user-action=ignore --upgrade pip
 
 # Il seguente comando consente di installare le dipendenze 
@@ -18,4 +21,4 @@ RUN pip install --root-user-action=ignore --upgrade pip
 # evitare che pip usi la cache durante l'installazione delle 
 # dipendenze. Tale cache viene salvata all'interno dell'immagine
 # Docker, aumentando la dimensione di quest'ultima.
-RUN pip install --root-user-action=ignore --no-cache-dir -r requirements
+RUN pip3 install --root-user-action=ignore --no-cache-dir -r requirements
