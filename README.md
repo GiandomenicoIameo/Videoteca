@@ -1,5 +1,5 @@
 # Guida ai comandi
-## Creazione delle immagini dai rispettivi Dockerfile
+## Creazione delle immagini dai Dockerfile
 
 ```bash
 $ cd Videoteca/client
