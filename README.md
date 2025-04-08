@@ -10,6 +10,7 @@ $ docker build --tag=<nome_immagine>[:<tag>] .
 ```
 
 ## Avvio di un container in modalità interattiva
+### Avvio del container del server
 
 ```bash
 # Le opzioni --name e --network consentono, rispettivamente, di
