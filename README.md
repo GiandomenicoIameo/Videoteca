@@ -37,7 +37,7 @@ $ docker run --shm-size=512m -it --rm --name=cclient -e DISPLAY=$DISPLAY -v /tmp
 # Una volta avviato il container del server, tramite una
 # sessione di terminale, è sufficiente digitare:
 
-$ ./server-tcp.out
+$ ./src/server-tcp.out
 Server in ascolto sulla porta 8080...
 
 # Una volta ciò, basta spostarci nel container del client, avviato
