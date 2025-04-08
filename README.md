@@ -38,10 +38,8 @@ $ docker run -it --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/
 
 $ xhost +local:docker
 $ xhost -local:docker
-```
 
-```bash
-# Il comando per creare e avviare il container del client è il seguente:
+# Dopodiché non ci resta che avviare il container del client:
 
 $ docker run --shm-size=512m -it --rm --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine> /bin/bash
 ```
