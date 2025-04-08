@@ -3,16 +3,10 @@
 
 ```bash
 $ cd Videoteca/client
-$ docker build --tag=<nome-immagine>[:<tag>] .
+$ docker build --tag=<nome_immagine>[:<tag>] .
 
 $ cd Videoteca/server
-$ docker build --tag=<nome-immagine>[:<tag>] .
-```
-
-## Creazione di una rete di container
-
-```bash
-$ docker network create <nome-rete>
+$ docker build --tag=<nome_immagine>[:<tag>] .
 ```
 
 ## Avvio di un container in modalità interattiva
