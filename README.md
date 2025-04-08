@@ -34,9 +34,10 @@ $ docker run -it --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/
 > grafico X11 del proprio sistema host, quindi è importante rimuovere l'autorizzazione dopo aver finito.
 
 ```bash
-# Il comando è il seguente:
+# I comandi per concedere e rimuovere l'autorizzazione  ai container docker sono:
 
 $ xhost +local:docker
+$ xhost -local:docker
 ```
 
 ```bash
