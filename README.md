@@ -9,11 +9,11 @@ $ cd Videoteca/server
 $ docker build --tag=<nome_immagine>[:<tag>] .
 ```
 
-## Avvio di un container in modalità interattiva
+## Avvio dei container in modalità interattiva
 ### Avvio del container del server
 
 ```bash
-# Il comando creare e avviare il container del server è il seguente:
+# Il comando per creare e avviare il container del server è il seguente:
 
 $ docker run -it --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/bash
 
@@ -24,9 +24,13 @@ $ docker run -it --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/
 # esposta sulla porta 8080 del computer locale. In altre parole, senza l'opzione -p il container
 # rimarrebbe completamente isolato, non accessibile dall'esterno.
 ```
+### Avvio del container del client
 
-# N.B. Il nome del container del server deve corrispondere al valore specificato
-# nella variabile server_name nel file client-tcp.py
+```bash
+Il comando per creare e avviare il container del client è il seguente:
+$ docker run --shm-size=512m -it --rm --name=cclient -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri iclient /bin/bash
+```
+
 ```
 
 ## Demo
