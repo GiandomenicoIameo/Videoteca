@@ -37,13 +37,14 @@ $ docker run --shm-size=512m -it --rm --name=cclient -e DISPLAY=$DISPLAY -v /tmp
 ```bash
 # Una volta avviato il container del server, tramite una
 # sessione di terminale, è sufficiente digitare:
+
 $ ./server-tcp.out
 Server in ascolto sulla porta 8080...
 
-# A questo punto basta spostarci nel container del client, avviato
+# Una volta ciò, basta spostarci nel container del client, avviato
 # precedentemente mediante un'altra sessione di terminale, e digitare:
+
 $ python3 client-tcp.py
-Componi messaggio:
 
 # A questo punto non ci resta che interagire con l'interfaccia grafica dell'
 # applicativo appena apparsa sullo schermo.
