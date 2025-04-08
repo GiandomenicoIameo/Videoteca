@@ -11,12 +11,14 @@ $ docker build --tag=<nome_immagine>[:<tag>] .
 
 ## Avvio di un container in modalità interattiva
 ### Avvio del container del server
-#### Il comando creare e avviare il container del server è il seguente:
+
 ```bash
+Il comando creare e avviare il container del server è il seguente:
 $ docker run -it --name=<nome-container> --network=<nome-rete> <nome-immagine> /bin/bash
-```
+
 Le opzioni --name e --network consentono, rispettivamente, di
 assegnare un nome al container e connettere quest'ultimo a una rete creata precedentemente
+```
 
 # N.B. Il nome del container del server deve corrispondere al valore specificato
 # nella variabile server_name nel file client-tcp.py
