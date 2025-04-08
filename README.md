@@ -14,6 +14,7 @@ $ docker build --tag=<nome_immagine>[:<tag>] .
 
 ```bash
 Il comando creare e avviare il container del server è il seguente:
+
 $ docker run -it --name=<nome-container> --network=<nome-rete> <nome-immagine> /bin/bash
 
 Le opzioni --name e --network consentono, rispettivamente, di
