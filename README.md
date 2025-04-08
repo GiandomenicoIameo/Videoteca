@@ -27,7 +27,7 @@ $ docker run -it --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/
 ### Avvio del container del client
 
 ```bash
-# Prima di avviare il container del client è necessario concedere l'autorizzazione al container Docker di
+# Prima di avviare il container del client è necessario concedere l'autorizzazione a quest'ultimo di
 # accedere al server grafico X11 del sistema Linux host.
 ```
 > E' bene notare che il comando che stiamo per menzionare consente a chiunque di connettersi al server
