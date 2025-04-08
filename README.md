@@ -27,7 +27,8 @@ $ docker run -it --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/
 ### Avvio del container del client
 
 ```bash
-Il comando per creare e avviare il container del client è il seguente:
+# Il comando per creare e avviare il container del client è il seguente:
+
 $ docker run --shm-size=512m -it --rm --name=cclient -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri iclient /bin/bash
 ```
 
