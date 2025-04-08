@@ -45,6 +45,6 @@ Server in ascolto sulla porta 8080...
 $ python3 client-tcp.py
 Componi messaggio:
 
-# Ora non dovremo far altro che digitare una stringa di caratteri e
-# premere invio, dopodiché l'applicazione farà il resto.
+# A questo punto non ci resta che interagire con l'interfaccia grafica dell'
+# applicativo appena apparsa sullo schermo.
 ```
