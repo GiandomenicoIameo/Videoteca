@@ -1,6 +1,8 @@
 FROM python:latest
 
-RUN apt update && apt install -y python3-pyqt5 python3-pyqt5.qtwebengine python3-pyqt5.qtwebchannel libqt5webkit5-dev 
+RUN apt update && apt install -y python3-pyqt5 \
+python3-pyqt5.qtwebengine python3-pyqt5.qtwebchannel \
+libqt5webkit5-dev 
 
 # Utilizzando il seguente comando, viene creata la directory 
 # di lavoro denominata app, che è una sottodirectory della 
