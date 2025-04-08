@@ -10,6 +10,8 @@ WORKDIR /app
 # directory di lavoro del container: /app
 COPY . /app
 
+WORKDIR /app/src
 # Compilazione del programma server-tcp.c e
 # creazione dell'eseguibile
-RUN make cc=server-tcp
+RUN make
+WORKDIR /app

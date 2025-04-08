@@ -1,6 +1,6 @@
 # Variabili
 CC = gcc
-OPTIONS = -Wall -Wextra -pedantic -fstack-protector-strong -I../include
+OPTIONS = -Wall -Wextra -pedantic -fstack-protector-strong -I ../include
 LIB = ../lib/authentication.c ../lib/session.c ../lib/release.c \
       ../lib/search.c ../lib/metadata.c server-tcp.c
 OBJ = $(LIB:.c=.o)
@@ -14,4 +14,3 @@ server-tcp.out:	$(OBJ)
 
 clean:
 	rm $(OBJ) server-tcp.out
-

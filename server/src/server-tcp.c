@@ -37,7 +37,7 @@ int request( int sdb, char *buffer, int *type, int *action, char **body );
 void response( int result, char *message, int *sdb );
 char *split( char *buffer, int *type, int *action );
 
-void handler( int vsignal );
+void handler( int sign );
 
 int main( void ) {
 
@@ -70,6 +70,7 @@ int main( void ) {
     }
 
     while( 1 ) {
+
             signal( SIGINT, handler );
             signal( SIGTERM, handler );
 
@@ -94,7 +95,7 @@ int main( void ) {
     return 0;
 }
 
-void handler( int vsignal ) {
+void handler( int sign ) {
 
     extern semaphore wrts;
     char command[ 100 ];
@@ -104,7 +105,7 @@ void handler( int vsignal ) {
     // Processo scrittore che accede al file signed.dat.
     writer( command, wrts );
 
-    puts( "Connessione terminata!" );
+    puts( "\nConnessione terminata!" );
     exit( EXIT_SUCCESS );
 
     // Il processo principale termina normalmente e ogni thread creato
