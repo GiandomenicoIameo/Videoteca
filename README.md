@@ -16,7 +16,7 @@ $ sudo apt update && apt install docker
 
 *La creazione degli ambienti richiede dapprima la costruzione di particolari oggetti docker noti come ___immagini___. I Dockerfile, memorizzati rispettivamente nella directory ```client/``` e nella directory ```server/```, definiscono proprio come costruire queste immagini. La creazione è dettata dai seguenti comandi:*
 
-## Creazione delle immagini dai Dockerfile
+## <p align=center>Creazione delle immagini dai Dockerfile</p>
 
 ```bash
 $ cd Videoteca/client
