@@ -43,7 +43,7 @@ $ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine>
 ```bash
 $ xhost +local:docker
 ```
-*E' bene notare che tale comando consente a qualunque macchina remota di connettersi al server grafico X11 del proprio sistema host, quindi per proteggere il sistema è buona pratica revocare l'autorizzazione al termine del lavoro. Per farlo, basta digitare:*
+*E' bene notare che tale comando consente a qualsiasi processo in esecuzione su una macchina remota di connettersi al server grafico X11 del proprio sistema host, quindi per proteggere il sistema è buona pratica revocare l'autorizzazione al termine del lavoro. Per farlo, basta digitare:*
 
 ```bash
 $ xhost -local:docker
