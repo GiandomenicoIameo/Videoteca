@@ -2,9 +2,6 @@
 L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, per tutta la durata della guida si assumerà che l'utente 
 si trovi su una distribuzione GNU/Linux completamente funzionannte, dotata del gestore grafico X Window System.
 
-# <font face="Garamond">Questo è un testo con il font Garamond.</font>
-
-
 ## Creazione delle immagini dai Dockerfile
 
 ```bash
