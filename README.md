@@ -1,6 +1,6 @@
 # <p align=center>Guida ai comandi</p>
 *L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, per tutta la durata della guida si assumerà che l'utente 
-si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System. Tuttavia, ci teniamo a precisare che la configurazione dell'ambiente di esecuzione dell'aplicazione, così come i vari test sull'applicazione stessa, sono stati effettuati su un'unica distribuzione, ovvero Debian GNU/Linux 12 (Bookworm).*
+si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System. Tuttavia, ci teniamo a precisare che la configurazione dell'ambiente di esecuzione dell'applicazione, così come i vari test sull'applicazione stessa, sono stati effettuati su un'unica distribuzione, ovvero Debian GNU/Linux 12 (Bookworm).*
 
 *Questa guida ha come scopo quello di presentare, anzitutto, la tecnologia utilizzata per comprendere il corretto funzionamento dell'applicazione e, in secondo luogo, di descrivere i passaggi per la configurazione dell'ambiente in cui l'applicativo verrà eseguito.*
 
