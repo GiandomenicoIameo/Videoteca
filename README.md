@@ -34,12 +34,12 @@ $ docker build --tag=<nome_immagine>[:<tag>] .
 ```bash
 $ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/bash
 ```
-* L'opzione --name consente di assegnare un nome al container.
-* L'opzione -p 8080:8080  è di fondamentale importanza per la comunicazione tra due container.
+* *L'opzione ___--name___ consente di assegnare un nome al container.*
+* *L'opzione -p 8080:8080  è di fondamentale importanza per la comunicazione tra due container.
   Tale opzione mappa la porta del container su una porta dell'host locale. Nel nostro caso,
   La porta 8080 del container ( che sarebbe anche la porta da cui ascolta il server ) viene
   esposta sulla porta 8080 del computer locale. In altre parole, senza l'opzione -p il container
-  rimarrebbe completamente isolato, non accessibile dall'esterno.
+  rimarrebbe completamente isolato, non accessibile dall'esterno.*
 
 ### Avvio del container del client
 
