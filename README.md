@@ -1,6 +1,6 @@
 # <p align=center>Guida ai comandi</p>
 L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, per tutta la durata della guida si assumerà che l'utente 
-si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System. Questa guida ha come scopo quello di presentare, anzitutto, una panoramica delle tecnologie utilizzate per commprendere il corretto funzionamento dell'applicazione e, in secondo luogo, di descrivere i passaggi per la configurazione dell'ambiente in cui verrà eseguito.
+si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System. Questa guida ha come scopo quello di presentare, anzitutto, una panoramica delle tecnologie utilizzate per commprendere il corretto funzionamento dell'applicazione e, in secondo luogo, di descrivere i passaggi per la configurazione dell'ambiente in cui l'applicativo verrà eseguito.
 
 ## <p align=center>Tecnologie utilizzate</p>
 ### Docker
