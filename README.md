@@ -2,6 +2,10 @@
 L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, per tutta la durata della guida si assumerà che l'utente 
 si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System.
 
+## Tecnologie utilizzate
+
+
+
 ## Creazione delle immagini dai Dockerfile
 
 ```bash
