@@ -1,6 +1,6 @@
 # <p align=center>Guida ai comandi</p>
 L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, per tutta la durata della guida si assumerà che l'utente 
-si trovi su una distribuzione GNU/Linux completamente funzionannte, dotata del gestore grafico X Window System.
+si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System.
 
 ## Creazione delle immagini dai Dockerfile
 
