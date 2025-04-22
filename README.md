@@ -40,10 +40,8 @@ $ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/bash
 ### Avvio del container del client
 Prima di avviare il container del client è necessario concedere l'autorizzazione a quest'ultimo di accedere al server grafico X11 del sistema Linux host.
 
-```bash
-```
-> E' bene notare che il comando che stiamo per menzionare consente a chiunque di connettersi al server
-> grafico X11 del proprio sistema host, quindi è importante rimuovere l'autorizzazione dopo aver terminato il lavoro.
+> E' bene notare che il comando che stiamo per menzionare consente a qualunque macchina remota di connettersi al server
+> grafico X11 del proprio sistema host, quindi per proteggere il sistema è buona pratica revocare l'autorizzazione al termine del lavoro.
 
 ```bash
 # I comandi per concedere e rimuovere l'autorizzazione ai container docker sono:
