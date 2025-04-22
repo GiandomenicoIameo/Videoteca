@@ -27,7 +27,7 @@ $ cd Videoteca/server
 $ docker build --tag=<nome_immagine>[:<tag>] .
 ```
 
-## Avvio dei container in modalità interattiva
+## Avvio dei container
 ### Avvio del container del server
 
 ```bash
