@@ -4,6 +4,7 @@ si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del ge
 una panoramica delle tecnologie utilizzate per poi dare istruzioni su come eseguire l'applicazione.
 
 ## <p align=center>Tecnologie utilizzate</p>
+### Containerizzazione
 La tecnologia di virtualizzazione impiegata per questa applicazione si basa sulla *containerizzazione*.
 
 
