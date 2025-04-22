@@ -29,10 +29,9 @@ $ docker build --tag=<nome_immagine>[:<tag>] .
 
 ### Avvio dei container
 #### Avvio del container del server
+*Il comando per creare e avviare il container del server è il seguente:*
 
 ```bash
-# Il comando per creare e avviare il container del server è il seguente:
-
 $ docker run -it --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/bash
 
 # L'opzione --name consente di assegnare un nome al container.
