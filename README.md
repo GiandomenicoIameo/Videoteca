@@ -3,7 +3,7 @@ L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Per
 si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System. Lo scopo di questa guida è quello di presentare 
 una panoramica delle tecnologie utilizzate per poi dare istruzioni su come eseguire l'applicazione.
 
-## Tecnologie di virtualizzazione utilizzate
+## <p align=center>Tecnologie utilizzate</p>
 La tecnologia di virtualizzazione impiegata per questa applicazione si basa sulla *containerizzazione*.
 
 
