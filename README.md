@@ -1,3 +1,9 @@
+<style>
+  body {
+    font-family: 'Garamond', serif;
+  }
+</style>
+
 # Guida ai comandi
 *L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, per tutta la durata della guida si assumerà che l'utente 
 si trovi su una distribuzione GNU/Linux completamente funzionannte, dotata del gestore grafico X Window System.*
