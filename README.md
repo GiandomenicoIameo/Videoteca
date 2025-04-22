@@ -1,7 +1,7 @@
 # <p align=center>Guida ai comandi</p>
 L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, per tutta la durata della guida si assumerà che l'utente 
 si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System. Lo scopo di questa guida è quello di presentare 
-una panoramica delle tecnologie utilizzate per questo applicativo per poi dare le istruzioni su come eseguirlo.
+una panoramica delle tecnologie utilizzate per poi dare istruzioni su come eseguire l'applicazione.
 
 ## Tecnologie di virtualizzazione utilizzate
 La tecnologia di virtualizzazione impiegata per questa applicazione si basa sulla *containerizzazione*.
