@@ -55,4 +55,4 @@ $ xhost -local:docker
 ```bash
 $ docker run --rm --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine> /bin/bash
 ```
-Se tutti i passaggi sono stati completati con successo, allora sullo schermo dovrebbe avviarsi l'interfaccia grafica dell'applicazione. Altrimenti si prega di comunicare ogni eventuale anomalia riscontrata durante il processo di configurazione dell'ambiente per aiutarci a migliorare l'applicazione.
+Se tutti i passaggi sono stati completati con successo, l'interfaccia grafica dovrebbe presentarsi sullo schermo. In caso contrario, si prega di segnalare eventuali anomalie riscontrate durante la configurazione dell'ambiente per aiutarci a migliorare l'applicazione.
