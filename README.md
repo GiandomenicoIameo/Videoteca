@@ -27,8 +27,8 @@ $ cd Videoteca/server
 $ docker build --tag=<nome_immagine>[:<tag>] .
 ```
 
-## Avvio dei container
-### Avvio del container del server
+### Avvio dei container
+#### Avvio del container del server
 
 ```bash
 # Il comando per creare e avviare il container del server è il seguente:
