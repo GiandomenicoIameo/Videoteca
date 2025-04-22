@@ -38,7 +38,9 @@ $ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine>
 * *L'opzione ___-p 8080:8080___  è di fondamentale importanza per la comunicazione tra i due container. Tale opzione mappa la porta del container su una porta         dell'host locale. Nel nostro caso, la porta 8080 del container (che sarebbe anche la porta da cui ascolta il programma server) viene esposta sulla porta 8080     del computer locale. In altre parole, senza l'opzione -p il container rimarrebbe completamente isolato, non accessibile dall'esterno.*
 
 ### Avvio del container del client
-*Prima di avviare il container del client è necessario concedere l'autorizzazione a quest'ultimo di accedere al server grafico X11 del sistema Linux host. Per impostazione predefinita, il server X limita l'accesso ai client esterni (come quelli all'interno di un container). Il comando che stiamo per menzionare modifica le regole di accesso, permettendo anche ai processi avviati nei container Docker di interagire con il server X del sistema host. Questo passaggio risulta necessario affinché l'interfaccia grafica dell'applicazione venga avviata. Il comando per concedere l'autorizzazione ai container docker è:*
+*L'avvio del container del client richiede il completamento di due passaggi che ora descriveremo. 
+
+*Come prima cosa è necessario concedere l'autorizzazione al container di accedere al server grafico X11 del sistema Linux host. Per impostazione predefinita, il server X limita l'accesso ai client esterni (come quelli all'interno di un container). Il comando che stiamo per menzionare modifica le regole di accesso, permettendo anche ai processi avviati nei container Docker di interagire con il server X del sistema host. Questo passaggio risulta necessario affinché l'interfaccia grafica dell'applicazione venga avviata. Il comando per concedere l'autorizzazione ai container docker è:*
  
 ```bash
 $ xhost +local:docker
@@ -48,12 +50,13 @@ $ xhost +local:docker
 ```bash
 $ xhost -local:docker
 ```
-*Prima di avviare il container è necessario definire la variabile d'ambiente DISPLAY. Essa indica quale server X (il gestore grafico) deve essere utilizzato per gestire le applicazioni grafiche, e quindi anche mostrarle. Senza dilungarci troppo su questa variabile digitiamo:*
+*Come secondo passaggio, bisogna definire la variabile d'ambiente DISPLAY. Essa indica quale server X (il gestore grafico) deve essere utilizzato per gestire le applicazioni grafiche, e quindi anche mostrarle. Senza dilungarci troppo su questa variabile digitiamo:*
 
 ```bash
 $ export DISPLAY=:0
 ```
-```:0``` *rappresenta in genere il primo server X attivo. Il comando ```export``` rende questa variabile disponibile per i processi che verranno avviati nella stessa sessione.*
+```:0``` *rappresenta in genere il primo server X attivo. Il comando ```export``` rende questa variabile disponibile per i processi che verranno avviati nella stessa sessione. 
+Come si vedrà fra poco, tale variabile verrà utilizzata per comunicare al container a qual server X deve connetersi il processo client in esecuzione nel container.*
 
 *Arrivati a questo punto, non ci resta che avviare il container del client*
 
