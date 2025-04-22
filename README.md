@@ -56,7 +56,7 @@ $ xhost -local:docker
 $ export DISPLAY=:0
 ```
 ```:0``` *rappresenta in genere il primo server X attivo. Il comando ```export``` rende questa variabile disponibile per i processi che verranno avviati nella stessa sessione. 
-Come si vedrà fra poco, tale variabile verrà utilizzata per comunicare al container a qual server X deve connetersi il processo client in esecuzione nel container.*
+Come si vedrà fra poco, tale variabile verrà utilizzata per comunicare al container a qual server X deve connetersi il processo client.*
 
 *Arrivati a questo punto, non ci resta che avviare il container del client*
 
