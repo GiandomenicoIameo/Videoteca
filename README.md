@@ -32,7 +32,7 @@ $ docker build --tag=<nome_immagine>[:<tag>] .
 *Il comando per creare e avviare il container del server è il seguente:*
 
 ```bash
-$ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/bash
+$ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine>
 ```
 * *L'opzione ___--name___ consente di assegnare un nome al container.*
 * *L'opzione ___-p 8080:8080___  è di fondamentale importanza per la comunicazione tra i due container. Tale opzione mappa la porta del container su una porta         dell'host locale. Nel nostro caso, la porta 8080 del container (che sarebbe anche la porta da cui ascolta il programma server) viene esposta sulla porta 8080     del computer locale. In altre parole, senza l'opzione -p il container rimarrebbe completamente isolato, non accessibile dall'esterno.*
@@ -48,11 +48,17 @@ $ xhost +local:docker
 ```bash
 $ xhost -local:docker
 ```
+*Prima di avviare il container è necessario definire la variabile d'ambiente DISPLAY. Essa indica quale server X (il gestore grafico) deve essere utilizzato per gestire le applicazioni grafiche, e quindi anche mostrarle. Senza dilungarci troppo su questa variabile digitiamo:*
+
+```bash
+$ export DISPLAY=:0
+```
+```:0``` *rappresenta in genere il primo server X attivo. Il comando ```export``` rende questa variabile disponibile per i processi che verranno avviati nella stessa sessione.*
 
 *Arrivati a questo punto, non ci resta che avviare il container del client*
 
 
 ```bash
-$ docker run --rm --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine> /bin/bash
+$ docker run --rm --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine>
 ```
-Se tutti i passaggi sono stati completati con successo, l'interfaccia grafica dovrebbe presentarsi sullo schermo. In caso contrario, si prega di segnalare eventuali anomalie riscontrate durante la configurazione dell'ambiente per aiutarci a migliorare l'applicazione.
+*Se tutti i passaggi sono stati completati con successo, l'interfaccia grafica dovrebbe presentarsi sullo schermo. In caso contrario, si prega di segnalare eventuali anomalie riscontrate durante la configurazione dell'ambiente per aiutarci a migliorare l'applicazione.*
