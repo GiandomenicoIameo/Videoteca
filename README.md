@@ -55,21 +55,4 @@ $ xhost -local:docker
 ```bash
 $ docker run --rm --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine> /bin/bash
 ```
-
-## Demo
-
-```bash
-# Una volta avviato il container del server, tramite una
-# sessione di terminale, è sufficiente digitare:
-
-$ ./src/server-tcp.out
-Server in ascolto sulla porta 8080...
-
-# Una volta ciò, basta spostarci nel container del client, avviato
-# precedentemente mediante un'altra sessione di terminale, e digitare:
-
-$ python3 client-tcp.py
-
-# A questo punto non ci resta che interagire con l'interfaccia grafica dell'
-# applicativo appena apparsa sullo schermo.
-```
+Se tutti i passaggi sono stati completati con successo, allora sullo schermo dovrebbe avviarsi l'interfaccia grafica dell'applicazione. Altrimenti si prega di comunicare ogni eventuale anomalia riscontrata durante il processo di configurazione dell'ambiente per aiutarci a migliorare l'applicazione.
