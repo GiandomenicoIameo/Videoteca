@@ -53,7 +53,7 @@ $ xhost -local:docker
 
 
 ```bash
-$ docker run --shm-size=512m -it --rm --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine> /bin/bash
+$ docker run --rm --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine> /bin/bash
 ```
 
 ## Demo
