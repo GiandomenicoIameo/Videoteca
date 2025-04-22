@@ -38,7 +38,7 @@ $ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine>
 * *L'opzione ___-p 8080:8080___  è di fondamentale importanza per la comunicazione tra i due container. Tale opzione mappa la porta del container su una porta         dell'host locale. Nel nostro caso, la porta 8080 del container (che sarebbe anche la porta da cui ascolta il programma server) viene esposta sulla porta 8080     del computer locale. In altre parole, senza l'opzione -p il container rimarrebbe completamente isolato, non accessibile dall'esterno.*
 
 ### Avvio del container del client
-*Prima di avviare il container del client è necessario concedere l'autorizzazione a quest'ultimo di accedere al server grafico X11 del sistema Linux host. Questo passaggio è necessario per avviare l'interfaccia grafica dell'applicazione. Il comando per concedere l'autorizzazione ai container docker è:*
+*Prima di avviare il container del client è necessario concedere l'autorizzazione a quest'ultimo di accedere al server grafico X11 del sistema Linux host. Per impostazione predefinita, il server X limita l'accesso ai client esterni (come quelli all'interno di un container). Il comando che stiamo per menzionare modifica le regole di accesso, permettendo anche ai processi avviati nei container Docker di interagire con il server X del sistema host. Questo passaggio risulta necessario affinché l'interfaccia grafica dell'applicazione venga avviata. Il comando per concedere l'autorizzazione ai container docker è:*
  
 ```bash
 $ xhost +local:docker
