@@ -14,7 +14,7 @@ $ sudo apt update && apt install docker
 ```
 *Ora non ci resta che creare l'ambiente adatto per eseguire l'applicazione. Creeremo due ambienti virtuali, in cui il programma client e il programma server verranno eseguiti in modo isolato. Successivamente, questi programmi comunicheranno tramite la rete di comunicazione, sfruttando le porte e gli indirizzi dei container.*
 
-*La creazione degli ambienti richiede dapprima la costruzione di particolari oggetti docker noti come ___immagini___. I Dockerfile, memorizzati rispettivamente nella directory client e nella directory server, definiscono proprio come costruire queste immagini.* La creazione è dettata dai seguenti comandi:*
+*La creazione degli ambienti richiede dapprima la costruzione di particolari oggetti docker noti come ___immagini___. I Dockerfile, memorizzati rispettivamente nella directory ```client/``` e nella directory ```server/```, definiscono proprio come costruire queste immagini. La creazione è dettata dai seguenti comandi:*
 
 ## Creazione delle immagini dai Dockerfile
 
