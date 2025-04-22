@@ -1,11 +1,10 @@
 # <p align=center>Guida ai comandi</p>
 L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, per tutta la durata della guida si assumerà che l'utente 
-si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System. Lo scopo di questa guida è quello di presentare 
-una panoramica delle tecnologie utilizzate per poi dare istruzioni su come eseguire l'applicazione.
+si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del gestore grafico X Window System. Questa guida ha come scopo quello di presentare, anzitutto, una panoramica delle tecnologie utilizzate per commprendere il corretto funzionamento dell'applicazione e, in secondo luogo, di descrivere i passaggi per la configurazione dell'ambiente in cui verrà eseguito.
 
 ## <p align=center>Tecnologie utilizzate</p>
-### Containerizzazione
-La tecnologia di virtualizzazione impiegata per questa applicazione si basa sulla *containerizzazione*.
+### Docker
+Docker è la tecnologia di virtualizzazione impiegata per questa applicazione e si basa sul concetto di *containerizzazione*. E' uno strumento che permette in modo estremamente facile la creazione, l'utilizzo e l'esecuzione di applicazioni utilizzando i container. In questo modo l'utente focalizza l'attenzione su questioni diverse dall'installazione e configurazione dell'applicazione.
 
 
 
