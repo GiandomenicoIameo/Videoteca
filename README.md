@@ -1,4 +1,8 @@
 # Guida ai comandi
+L'applicazione è stata progettata per essere eseguita su sistemi GNU/Linux. Pertanto, la guida guida presuppone che l'utente che desideri
+eseguire l'applicativo si trovi su una distribuzione GNU/Linux che disponga del gestore grafico X Window System.
+
+
 ## Creazione delle immagini dai Dockerfile
 
 ```bash
