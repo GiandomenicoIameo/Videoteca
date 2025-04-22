@@ -32,7 +32,7 @@ $ docker build --tag=<nome_immagine>[:<tag>] .
 *Il comando per creare e avviare il container del server è il seguente:*
 
 ```bash
-$ docker run -it --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/bash
+$ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine> /bin/bash
 
 # L'opzione --name consente di assegnare un nome al container.
 # L'opzione -p 8080:8080  è di fondamentale importanza per la comunicazione tra due container.
