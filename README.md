@@ -32,7 +32,7 @@ $ docker build --tag=<nome_immagine>[:<tag>] .
 *Il comando per creare e avviare il container del server è il seguente:*
 
 ```bash
-$ docker run --rm --name=<nome_container> -p 8080:8080 <nome_immagine>
+$ docker run --name=<nome_container> -p 8080:8080 <nome_immagine>
 ```
 * *L'opzione ___--name___ consente di assegnare un nome al container.*
 * *L'opzione ___-p 8080:8080___  è di fondamentale importanza per la comunicazione tra i due container. Tale opzione mappa la porta del container su una porta         dell'host locale. Nel nostro caso, la porta 8080 del container (che sarebbe anche la porta da cui ascolta il programma server) viene esposta sulla porta 8080     del computer locale. In altre parole, senza l'opzione -p il container rimarrebbe completamente isolato, non accessibile dall'esterno.*
@@ -62,6 +62,6 @@ Come si vedrà fra poco, tale variabile verrà utilizzata per comunicare al cont
 
 
 ```bash
-$ docker run --rm --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine>
+$ docker run --name=<nome_container> -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /dev/dri:/dev/dri <nome_immagine>
 ```
 *Se tutti i passaggi sono stati completati con successo, l'interfaccia grafica dovrebbe presentarsi sullo schermo. In caso contrario, si prega di segnalare eventuali anomalie riscontrate durante la configurazione dell'ambiente per aiutarci a migliorare l'applicazione.*
