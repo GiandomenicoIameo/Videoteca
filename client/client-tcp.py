@@ -1,201 +1,214 @@
 from socket import *
-import subprocess
-import sys
+import webview
+import os
 import gzip
-import io
+import subprocess
 import signal
+import sys
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLineEdit
-from PyQt6.QtGui import QIcon, QAction
-from PyQt6 import QtCore
-from gui.access import Ui_MainWindow
+os.environ[ "QTWEBENGINE_CHROMIUM_FLAGS" ] = "--no-sandbox"
 
-class MainWindow( QMainWindow ):
+class WebApp:
 
-    def __init__( self, action ):
-        super( MainWindow, self ).__init__()
+    address   = None
+    port      = None
+    filename  = None
+    client    = None
+
+    def __init__( self, address, port, filename ):
+
+        self.address   = address
+        self.port      = port
+        self.filename  = filename
+
+        self.client = socket( AF_INET, SOCK_STREAM )
+        self.client.connect( ( self.address, self.port ) )
+
+    def authentication( self, data ):
+
+        method = 0
+
+        head = str( int( method ) ) + str( data[ 'action' ] )
+        message = head + data[ 'username' ] + ' ' + data[ 'password' ]
+
+        self.client.send( message.encode() )
+        response = self.client.recv( 1024 )
+
+        if data[ 'action' ] == 0:
+            res = self.signin( response.decode() )
+
+        elif data[ 'action' ] == 1:
+            res = self.signup( response.decode() )
+
+        return res
+
+    def signin( self, response ):
+
+        if response == "Accesso negato!":
+            return 0
+        elif response == "Connesso!":
+            return 1
+        else:
+            return 2
+
+    def signup( self, response ):
+
+        if response == "Username già in uso!":
+            return 0
+        elif response == "Account creato!":
+            return 1
+
+    def session( self, data ):
+
+        method = 1
+        head = str( int( method ) ) + str( data[ 'action' ] )
+
+        if data[ 'action' ] == 1:
+            return self.toCart( head, data )
+
+        elif data[ 'action' ] == 2:
+            return self.returnMovie( head, data )
+
+        elif data[ 'action' ] == 3:
+            return self.checkout( head )
+
+        elif data[ 'action' ] == 4:
+            return self.showcart( head )
+
+        elif data[ 'action' ] == 5:
+            return self.showrented( head )
 
 
-        self.username = None
-        self.password = None
+    def toCart( self, head, data ):
 
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi( self )
+        message = (head + data[ 'filmname' ] + '\0'
+                       + data[ 'number' ] + '\0'
+                       + data[ 'date' ] + '\0')
 
-        _translate = QtCore.QCoreApplication.translate
+        self.client.send( message.encode() )
+        response = self.client.recv( 1024 )
 
-        self.ui.label.setText( _translate( "MainWindow", action + " to GetMovie" ) )
-        self.ui.pushButton.setText( _translate( "MainWindow", action ) )
+        return response.decode()
 
-        self.ui.pushButton.clicked.connect( self.get )
+    def returnMovie( self, head, data ):
 
-    def get( self ):
-        if self.ui.lineEdit:
-            self.username = self.ui.lineEdit.text()
+        message = (head + data[ 'filmname' ] + '\0'
+                         + data[ 'number' ] + '\0'
+                         + data[ 'date' ] + '\0')
 
-        if self.ui.lineEdit_2:
-            self.password = self.ui.lineEdit_2.text()
+        self.client.send( message.encode() )
+        response = self.client.recv( 1024 )
 
-        self.close()
+        return response.decode()
 
-def authentication( head, action ):
+    def checkout( self, head ):
 
-    if action == 0:
-
-        app = QApplication( sys.argv )
-
-        window = MainWindow( "Sign in" )
-        window.show()
-
-        app.exec()
-
-        username = window.username
-        password = window.password
-
-        message = head + username + ' ' + password
-
-    elif action == 1:
-
-        app = QApplication( sys.argv )
-
-        window = MainWindow( "Sign up" )
-        window.show()
-
-        app.exec()
-
-        username = window.username
-        password = window.password
-
-        message = head + username + ' ' + password
-    else:
         message = head + ''
 
-    return message
+        self.client.send( message.encode() )
+        response = self.client.recv( 1024 )
 
-def session( head, action ):
+        #print( response.decode() )
+        return response.decode()
 
-    if action == 0: # richiesta di noleggio
-
-        filmname = input( 'Nome film: ' )
-        number   = input( 'Inserisci la quantità: ' )
-        date     = input( 'Inserisci data: ' )
-
-        message = head + filmname + '\0' + number + '\0' + date + '\0'
-
-    elif action == 1: # Aggiornamento al carrello
-
-        filmname = input( 'Nome film: ' )
-        number   = input( 'Inserisci quantità: ' )
-        date     = input( 'Inserisci data: ' )
-
-        message = head + filmname + '\0' + number + '\0' + date + '\0'
-
-    elif action == 2: # Richiesta di restituzione
-
-        filmname = input( 'Nome film: ' )
-        number   = input( 'Inserisci quantità: ' )
-        date     = input( 'Inserisci data: ' )
-
-        message = head + filmname + '\0' + number + '\0' + date + '\0'
-
-    elif action == 3: # Richiesta di checkout
+    def showcart( self, head ):
 
         message = head + ''
 
-    elif action == 4 or action == 5: # Visualizzazione
+        self.client.send( message.encode() )
+        response = self.client.recv( 1024 )
+
+        compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
+
+        try:
+            decompressed_data = gzip.decompress( compressed_data )
+            #print( decompressed_data.decode( 'utf-8' ) )
+            return decompressed_data.decode( 'utf-8' )
+        except Exception as e:
+            print( f"Errore durante la decompressione: {e}" )
+
+
+    def showrented( self, head ):
 
         message = head + ''
 
-    return message
+        self.client.send( message.encode() )
+        response = self.client.recv( 1024 )
 
-def release( head, action ):
+        compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
 
-    if action == 0 or action == 1:
-        return head + ''
+        try:
+            decompressed_data = gzip.decompress( compressed_data )
+            #print( decompressed_data.decode( 'utf-8' ) )
+            return decompressed_data.decode( 'utf-8' )
+        except Exception as e:
+            print( f"Errore durante la decompressione: {e}" )
 
-def search( head ):
+    def release( self, data ):
 
-    filmname = input( 'Nome film: ' )
-    message = head + filmname
+        method = 2
 
-    return message
+        head = str( int( method ) ) + str( data )
+        message = head + ''
 
-def make_request():
+        self.client.send( message.encode() )
+        self.client.recv( 1024 ) # Questa istruzione è essenziale
+                                 # per svuotare il buffer.
 
-    method = input( 'Inserisci il tipo di richiesta: ' )
-    method = int( method )
+        # Si assume che non ci siano stati errori durante il percorso, quindi
+        # il client si disinteressa della risposta del server. Il client presume che l'account
+        # sia stato disconnesso oppure cancellato
 
-    if method == 3:
+    def view( self ):
+
+        method = 3
         action = 0
-    else:
-        action = input( 'Inserisci il tipo di azione: ' )
-        action = int( action )
 
-    return method, action
+        head = str( int( method ) ) + str( int( action ) )
+        message = head + ''
+
+        self.client.send( message.encode() )
+        response = self.client.recv( 1024 )
+
+        compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
+
+        try:
+            decompressed_data = gzip.decompress( compressed_data )
+            #print( decompressed_data.decode( 'utf-8' ) )
+            return decompressed_data.decode( 'utf-8' )
+        except Exception as e:
+                print( f"Errore durante la decompressione: {e}" )
+
+    def quit( self ):
+
+        webview.windows[ 0 ].destroy()
+
+        self.client.close()
+        sys.exit()
+
+    def start_gui( self ):
+
+        html_file_path = os.path.join( os.path.dirname( __file__ ), 'template', self.filename )
+
+        with open( html_file_path, 'r' ) as file:
+            html_content = file.read()
+
+        subprocess.Popen(["python3", "-m", "http.server", "8000"])
+        percorso = f"http://localhost:8000/template/{os.path.basename(html_file_path)}"
+        window = webview.create_window( "Block Buster", url=percorso, js_api=self )
+        window.fullscreen = True
+        webview.start( gui='qt', args=['--no-sandbox'] )
 
 def handler( signum, frame ):
 
     print( "\nConnessione terminata!" )
     sys.exit( 0 )
 
+if __name__ == "__main__":
 
-if __name__ == '__main__':
+    signal.signal( signal.SIGINT, handler )
+    signal.signal( signal.SIGTERM, handler )
 
-    server_name = 'localhost'
-    server_port = 8080
+    app = WebApp( '172.17.0.2', 8080, 'index.html' )
+    app.start_gui()
 
-    client_socket = socket( AF_INET, SOCK_STREAM )
-    client_socket.connect( ( server_name, server_port ) )
-
-    while True:
-
-        signal.signal( signal.SIGINT, handler )
-        signal.signal( signal.SIGTERM, handler )
-
-        method, action = make_request()
-        head = str( method ) + str( action )
-
-        if method == 0:
-            message = authentication( head, action )
-
-        elif method == 1:
-            message = session( head, action )
-
-        elif method == 2:
-            message = release( head, action )
-            break
-
-        elif method == 3:
-            message = search( head )
-
-        else:
-            message = head + body
-            break
-
-        client_socket.send( message.encode() )
-        response = client_socket.recv( 1024 )
-
-        if method == 1 and ( action == 4 or action == 5 ):
-            print( "" )
-            compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
-
-            try:
-                decompressed_data = gzip.decompress( compressed_data )
-                print( decompressed_data.decode( 'utf-8' ) )
-
-            except Exception as e:
-                print( f"Errore durante la decompressione: {e}" )
-
-        else:
-            if not response:
-                print( 'Connessione chiusa dal server!' )
-                sys.exit( 0 )
-
-        print( 'Messaggio ricevuto dal server:', response.decode() )
-
-    client_socket.send( message.encode() )
-    response = client_socket.recv( 1024 )
-
-    print( 'Messaggio ricevuto dal server:', response.decode() )
-    client_socket.close()
-    print( 'Connessione terminata' )

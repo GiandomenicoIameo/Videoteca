@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<!--[if IE 7]>
+<html class="ie ie7 no-js" lang="en-US">
+<![endif]-->
+<!--[if IE 8]>
+<html class="ie ie8 no-js" lang="en-US">
+<![endif]-->
+<!--[if !(IE 7) | !(IE 8)  ]><!-->
+<html lang="en" class="no-js">
+
+<!-- userfavoritegrid13:40-->
+<head>
+	<!-- Basic need -->
+	<title>Carrello</title>
+	<meta charset="UTF-8">
+	<meta name="description" content="">
+	<meta name="keywords" content="">
+	<meta name="author" content="">
+	<link rel="profile" href="#">
+
+    <!--Google Font-->
+    <link rel="stylesheet" href='http://fonts.googleapis.com/css?family=Dosis:400,700,500|Nunito:300,400,600' />
+	<!-- Mobile specific meta -->
+	<meta name=viewport content="width=device-width, initial-scale=1">
+	<meta name="format-detection" content="telephone-no">
+
+	<!-- CSS files -->
+	<link rel="stylesheet" href="css/plugins.css">
+	<link rel="stylesheet" href="css/style.css">
+
+	<script>
+		window.addEventListener( 'pywebviewready', function() {
+				const action = 4;
+				window.pywebview.api.session( { action } ).then( ( dati ) => {
+					const righe = typeof dati === 'string'
+					? dati
+						.split('\n')
+						.map(r => r.trim())
+						.filter(r => r.length > 0 && r.includes(':'))
+					: [];
+
+					if (righe.length === 0) {
+					return;
+					}
+
+					righe.forEach( ( riga, index ) => {
+
+						const contenitore = document.querySelector(".flex-wrap-movielist.grid-fav");
+
+						const colonne = riga.split(':');
+						const [titolo, remainders, amount, ritorno] = colonne;
+
+						// Crea il nuovo div
+						const nuovoDiv = document.createElement("div");
+						nuovoDiv.className = "movie-item-style-2 movie-item-style-1";
+						nuovoDiv.style.display = "block";
+
+						// Imposta il contenuto direttamente
+						nuovoDiv.innerHTML = `
+							<img src="images/uploads/${titolo}.jpg" alt="">
+							<div class="mv-item-infor">
+							<h6><a href="#">${titolo}</a></h6>
+							<p class="rate">
+								<span class="remainders-film${index}"></span><h7>/${amount}</h7>
+								<p class="rate">
+								<span>Rilascio: </span>
+								<h7>${ritorno}</h7>
+								</p>
+							</p>
+							</div>
+						`;
+
+						// Aggiungi al DOM
+						contenitore.appendChild(nuovoDiv);
+
+						// Ora trova gli elementi DENTRO il div appena creato e aggiorna
+						nuovoDiv.querySelector( `.remainders-film${index}` ).innerText = remainders;
+
+						document.getElementById("check-out").style.display = "inline-block";
+					});
+				});
+		});
+	</script>
+
+	<script>
+	</script>
+
+</head>
+<body>
+<!--preloading-->
+<div id="preloader">
+    <img class="logo" src="images/logo1.png" alt="" width="119" height="58">
+    <div id="status">
+        <span></span>
+        <span></span>
+    </div>
+</div>
+<!--end of preloading-->
+<!--login form popup-->
+<div class="login-wrapper" id="login-content">
+    <div class="login-content">
+        <a href="#" class="close">x</a>
+        <h3>Confermi il noleggio?</h3>
+        <form method="post" action="#">
+             <div class="row">
+            	<div id="error" class="remember" style="display: none">
+            		<a id="content-error" style="color: #FF0000"></a>
+            	</div>
+			</div>
+           <div class="row">
+           	 <button id="conferma" type="submit">Conferma</button>
+           	 <script>
+				document.getElementById( "conferma" ).addEventListener( "click", function ( event ) {
+					event.preventDefault();
+
+					const action = 3;
+					window.pywebview.api.session( { action } ).then( response => {
+						if( response == "Checkout riuscito!" ) {
+							const divsToRemove = document.querySelectorAll('.movie-item-style-2');
+							divsToRemove.forEach(div => {
+								div.remove();
+							});
+							location.reload();
+							document.getElementById( "check-out" ).style.display = "none";
+						} else {
+							document.getElementById( "content-error" ).textContent = response;
+							document.getElementById( "error" ).style.display = "block";
+						}
+					});
+				});
+			</script>
+           </div>
+        </form>
+    </div>
+</div>
+<!--end of login form popup-->
+<!--signup form popup-->
+<div class="login-wrapper"  id="signup-content">
+    <div class="login-content">
+        <a href="#" class="close">x</a>
+        <h3>Check-out</h3>
+		<label>
+		</label>
+    </div>
+</div>
+<!--end of signup form popup-->
+
+<!-- BEGIN | Header -->
+<header class="ht-header">
+	<div class="container">
+		<nav class="navbar navbar-default navbar-custom">
+				<!-- Brand and toggle get grouped for better mobile display -->
+				<div class="navbar-header logo">
+				    <div class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+					    <span class="sr-only">Toggle navigation</span>
+					    <div id="nav-icon1">
+							<span></span>
+							<span></span>
+							<span></span>
+						</div>
+				    </div>
+				    <a href="home.html"><img class="logo" src="images/logo1.png" alt="" width="119" height="58"></a>
+			    </div>
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="collapse navbar-collapse flex-parent" id="bs-example-navbar-collapse-1">
+					<ul class="nav navbar-nav flex-child-menu menu-left">
+						<li class="hidden">
+							<a href="#page-top"></a>
+						</li>
+						<li class="dropdown first">
+							<a href="home.html" class="btn btn-default dropdown-toggle lv1">Home </a>
+						</li>
+						<li class="dropdown first">
+							<a href="account.html" class="btn btn-default dropdown-toggle lv1" data-hover="dropdown"> Account</a>
+						</li>
+						<li class="dropdown first">
+							<a href="noleggio.html" class="btn btn-default dropdown-toggle lv1" data-hover="dropdown"> Film noleggiati</a>
+						</li>
+						<li class="dropdown first">
+							<a href="carrello.html" class="btn btn-default dropdown-toggle lv1" data-hover="dropdown"> Carrello </a>
+						</li>
+						<li class="dropdown first">
+							<a href="comunicazioni.html" class="btn btn-default dropdown-toggle lv1" data-hover="dropdown"> Messaggi </a>
+						</li>
+					</ul>
+				</div>
+			<!-- /.navbar-collapse -->
+	    </nav>
+		<!-- top search form -->
+	    </div>
+	</div>
+</header>
+<!-- END | Header -->
+
+<div class="hero user-hero">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="hero-ct">
+					<h1>Puoi noleggiare fino a 20 film</h1>
+					<ul class="breadcumb">
+						<li class="active"><a href="home.html">Home</a></li>
+						<li> <span class="ion-ios-arrow-right"></span>Carrello</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="page-single">
+	<div class="container">
+		<div class="row ipad-width2">
+			<div class="col-md-3 col-sm-12 col-xs-12">
+				<div class="user-information">
+					<div class="user-img">
+						<a><img src="images/uploads/user-img.png" alt=""><br></a>
+						<a href="#" id="check-out" class="redbtn checkout" style="display: none"> Check-out </a>
+					</div>
+					<div class="user-fav">
+						<p>Dettagli account</p>
+						<ul>
+							<li><a href="account.html">Account</a></li>
+							<li><a href="noleggio.html">Film noleggiati</a></li>
+							<li class="active"><a href="carrello.html">Carrello</a></li>
+						</ul>
+					</div>
+					<div class="user-fav">
+						<p>Altro</p>
+						<ul>
+							<li><a id="sign-out" href="#">Sign out</a></li>
+							<script>
+								document.getElementById( "sign-out").addEventListener( "click", function (e) {
+										e.preventDefault();
+										const action = 0
+
+										window.pywebview.api.release( action );
+										window.location.href = "index.html"
+									});
+							</script>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-9 col-sm-12 col-xs-12">
+				<div class="flex-wrap-movielist grid-fav">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- footer section-->
+<footer class="ht-footer">
+	<div class="container">
+		<div class="flex-parent-ft">
+			<div class="flex-child-ft item1">
+				 <a href="home.html"><img class="logo" src="images/logo1.png" alt=""></a>
+				 <p>5th Avenue st, manhattan<br>
+				New York, NY 10001</p>
+				<p>Call us: <a href="#">(+01) 202 342 6789</a></p>
+			</div>
+			<div class="flex-child-ft item2">
+				<h4>Resources</h4>
+				<ul>
+					<li><a href="#">About</a></li> 
+					<li><a href="#">Blockbuster</a></li>
+					<li><a href="#">Contact Us</a></li>
+					<li><a href="#">Forums</a></li>
+					<li><a href="#">Blog</a></li>
+					<li><a href="#">Help Center</a></li>
+				</ul>
+			</div>
+			<div class="flex-child-ft item3">
+				<h4>Legal</h4>
+				<ul>
+					<li><a href="#">Terms of Use</a></li> 
+					<li><a href="#">Privacy Policy</a></li>	
+					<li><a href="#">Security</a></li>
+				</ul>
+			</div>
+			<div class="flex-child-ft item4">
+				<h4>Account</h4>
+				<ul>
+					<li><a href="#">My Account</a></li> 
+					<li><a href="#">Watchlist</a></li>	
+					<li><a href="#">Collections</a></li>
+					<li><a href="#">User Guide</a></li>
+				</ul>
+			</div>
+			<div class="flex-child-ft item5">
+				<h4>Newsletter</h4>
+				<p>Subscribe to our newsletter system now <br> to get latest news from us.</p>
+				<form action="#">
+					<input type="text" placeholder="Enter your email...">
+				</form>
+				<a href="#" class="btn">Subscribe now <i class="ion-ios-arrow-forward"></i></a>
+			</div>
+		</div>
+	</div>
+	<div class="ft-copyright">
+		<div class="ft-left">
+			<p><a target="_blank" href="https://www.templateshub.net">Templates Hub</a></p>
+		</div>
+		<div class="backtotop">
+			<p><a href="#" id="back-to-top">Back to top  <i class="ion-ios-arrow-thin-up"></i></a></p>
+		</div>
+	</div>
+</footer>
+<!-- end of footer section-->
+
+<script src="js/jquery.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/plugins2.js"></script>
+<script src="js/custom.js"></script>
+</body>
+
+<!-- userfavoritegrid13:49-->
+</html>

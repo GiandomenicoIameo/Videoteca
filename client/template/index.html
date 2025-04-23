@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<!--[if IE 7]>
+<html class="ie ie7 no-js" lang="en-US">
+<![endif]-->
+<!--[if IE 8]>
+<html class="ie ie8 no-js" lang="en-US">
+<![endif]-->
+<!--[if !(IE 7) | !(IE 8)  ]><!-->
+<html lang="en" class="no-js">
+
+<!-- moviegrid07:29-->
+<head>
+	<!-- Basic need -->
+	<title>Block Buster</title>
+	<meta charset="UTF-8">
+	<meta name="description" content="">
+	<meta name="keywords" content="">
+	<meta name="author" content="">
+	<link rel="profile" href="#">
+
+    <!--Google Font-->
+    <link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Dosis:400,700,500|Nunito:300,400,600' />
+	<link rel="stylesheet" href="static/css/ionicons.min.css">
+
+	<!-- Mobile specific meta -->
+	<meta name=viewport content="width=device-width, initial-scale=1">
+	<meta name="format-detection" content="telephone-no">
+
+	<!-- CSS files -->
+	<link rel="stylesheet" href="css/plugins.css">
+	<link rel="stylesheet" href="css/style.css">
+
+	<script>
+		window.addEventListener( 'pywebviewready', function() {
+				window.pywebview.api.view().then( ( dati ) => {
+					const righe = dati.split( '\n' );
+					righe.forEach( riga => {
+
+						const colonne = riga.split( ':' );
+						for (let i = 0; i < 20; i++ ) {
+							const titleElement = document.getElementById( `film-title${i}` );
+							if ( titleElement ) {
+								const title = titleElement.textContent;
+								if ( colonne[ 0 ] === title ) {
+									document.getElementById(`remainders-film${i}`).innerText = colonne[ 1 ];
+									document.getElementById(`amount-film${i}`).innerText = " /" + colonne[ 2 ];
+								}
+							}
+						}
+					});
+				});
+		});
+	</script>
+
+</head>
+<body>
+<!--preloading-->
+<div id="preloader">
+    <img class="logo" src="images/logo1.png" alt="" width="119" height="58">
+    <div id="status">
+        <span></span>
+        <span></span>
+    </div>
+</div>
+<!--end of preloading-->
+
+<!--login form popup-->
+<div class="login-wrapper" id="login-content">
+    <div class="login-content">
+        <a href="#" class="close">x</a>
+        <h3>Accedi</h3>
+        <form method="post" action="#">
+        	<div class="row">
+        		 <label for="username">
+                    Username:
+                    <input type="text" name="username" id="username" />
+                </label>
+        	</div>
+
+            <div class="row">
+            	<label for="password">
+                    Password:
+                    <input type="password" name="password" id="password"/>
+                </label>
+            </div>
+            <div class="row">
+            	<div id="error" class="remember" style="display: none">
+            		<a style="color: #FF0000">Username o password non valida!</a>
+            	</div>
+            </div>
+           <div class="row">
+           	 <button id="submit-signin">Login</button>
+           </div>
+           <script>
+				document.getElementById( "submit-signin" ).addEventListener( "click", function (e) {
+					// Ottieni il valore dall'input
+					e.preventDefault();
+					const username = document.getElementById( "username" ).value;
+					const password = document.getElementById( "password" ).value;
+					const action = 0;
+
+					const divError = document.getElementById( "error" );
+
+					window.pywebview.api.authentication( { username, password, action } )
+						.then( response => {
+							if ( response == 0 ) {
+								divError.style.display = "block";
+							} else if ( response == 2 ) {
+								localStorage.setItem( "eventoAccaduto", "true" );
+								window.location.href = "home.html";
+							} else {
+								window.location.href = "home.html";
+							}
+						});
+				});
+		</script>
+        </form>
+    </div>
+</div>
+<!--end of login form popup-->
+<!--signup form popup-->
+<div class="login-wrapper"  id="signup-content">
+    <div class="login-content">
+        <a href="#" class="close">x</a>
+        <h3>Registrati</h3>
+        <form method="post" action="#">
+            <div class="row">
+                 <label for="username-2">
+                    Username:
+                    <input type="text" name="username" id="username-2" placeholder="" autocapitalize="off" />
+                </label>
+            </div>
+
+             <div class="row">
+                <label for="password-2">
+                    Password:
+                    <input type="password" name="password" id="password-2" placeholder="" autocapitalize="off" />
+                </label>
+            </div>
+             <div class="row">
+                <label for="repassword-2">
+                    Conferma password:
+                    <input type="password" name="password" id="repassword-2" placeholder="" />
+                </label>
+            </div>
+            <div class="row">
+            	<div id="error-2" class="remember" style="display: none">
+            		<a style="color: #FF0000">Username già in uso!</a>
+            	</div>
+            </div>
+			<div class="row">
+             <button id="submit-signup" type="submit-signup">Registrati</button>
+			</div>
+			<script>
+				document.getElementById( "submit-signup" ).addEventListener( "click", function (e) {
+					// Ottieni il valore dall'input
+					e.preventDefault();
+					const username = document.getElementById( "username-2" ).value;
+					const password = document.getElementById( "password-2" ).value;
+					const action = 1;
+
+					const divError = document.getElementById( "error-2" );
+
+					window.pywebview.api.authentication( { username, password, action } )
+						.then( response => {
+							if ( response == 0 ) {
+								divError.style.display = "block";
+							} else {
+								window.location.href = "home.html";
+							}
+						})
+				});
+			</script>
+		</form>
+    </div>
+</div>
+<!--end of signup form popup-->
+
+<!-- BEGIN | Header -->
+<header class="ht-header">
+	<div class="container">
+		<nav class="navbar navbar-default navbar-custom">
+				<!-- Brand and toggle get grouped for better mobile display -->
+				<div class="navbar-header logo">
+				    <div class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+					    <span class="sr-only">Toggle navigation</span>
+					    <div id="nav-icon1">
+							<span></span>
+							<span></span>
+							<span></span>
+						</div>
+				    </div>
+				    <a href="index.html"><img class="logo" src="images/logo1.png" alt="" width="119" height="58"></a>
+			    </div>
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="collapse navbar-collapse flex-parent" id="bs-example-navbar-collapse-1">
+					<ul class="nav navbar-nav flex-child-menu menu-left">
+						<li class="hidden">
+							<a href="#page-top"></a>
+						</li>
+					</ul>
+					<ul class="nav navbar-nav flex-child-menu menu-right">
+						<li><a href="#" id="Esci">Esci</a></li>
+						<script>
+								document.getElementById( "Esci").addEventListener( "click", function (e) {
+										e.preventDefault();
+										window.pywebview.api.quit();
+									});
+						</script>
+						<li class="loginLink"><a href="#">Accedi</a></li>
+						<li class="btn signupLink"><a href="#">Registrati</a></li>
+					</ul>
+				</div>
+			<!-- /.navbar-collapse -->
+	    </nav>
+</header>
+<!-- END | Header -->
+
+<div class="slider movie-items">
+	<div class="container">
+		<div class="row">
+	    	<div  class="slick-multiItemSlider">
+				<div class="movie-item">
+	    			<div class="mv-img">
+	    				<a href="#"><img src="images/uploads/Jurassic Park.jpg" alt="" width="285" height="437"></a>
+	    			</div>
+	    			<div class="title-in">
+	    				<div class="cate">
+	    					<span class="orange"><a>Avventura</a></span>
+	    				</div>
+	    				<h6><a>Jurassic Park</a></h6>
+	    			</div>
+	    		</div>
+				<div class="movie-item">
+	    			<div class="mv-img">
+	    				<a href="#"><img src="images/uploads/mv-it8.jpg" alt="" width="285" height="437"></a>
+	    			</div>
+	    			<div class="title-in">
+	    				<div class="cate">
+	    					<span class="blue"><a>Fantascienza</a></span>
+	    				</div>
+	    				<h6><a>Inception</a></h6>
+	    			</div>
+	    		</div>
+	    		<div class="movie-item">
+	    			<div class="mv-img">
+	    				<img src="images/uploads/movie-single.jpg" alt="" width="285" height="437">
+	    			</div>
+	    			<div class="title-in">
+	    				<div class="cate">
+	    					<span class="red"><a>Azione</a></span>
+	    				</div>
+	    				<h6><a>Skyfall</a></h6>
+	    			</div>
+	    		</div>
+	    		<div class="movie-item">
+	    			<div class="mv-img">
+	    				<img src="images/uploads/series-img.jpg" alt="" width="285" height="437">
+	    			</div>
+	    			<div class="title-in">
+	    				<div class="cate">
+	    					<span class="green"><a>Drammatico</a></span>
+	    				</div>
+	    				<h6><a>Brooklyn</a></h6>
+	    			</div>
+	    		</div>
+
+	    		<div class="movie-item">
+	    			<div class="mv-img">
+	    				<a href="#"><img src="images/uploads/slider1.jpg" alt="" width="285" height="437"></a>
+	    			</div>
+	    			<div class="title-in">
+	    				<div class="cate">
+	    					<span class="blue"><a>Fantascienza</a></span>
+	    				</div>
+	    				<h6><a>Oblivion</a></h6>
+	    			</div>
+	    		</div>
+
+
+				<div class="movie-item">
+	    			<div class="mv-img">
+	    				<a href="#"><img src="images/uploads/slider2.jpg" alt="" width="285" height="437"></a>
+	    			</div>
+	    			<div class="title-in">
+	    				<div class="cate">
+							</span> <span class="orange"><a>Avventura</a></span>
+	    				</div>
+	    				<h6><a>Into the wild</a></h6>
+	    			</div>
+	    		</div>
+	    		<div class="movie-item">
+	    			<div class="mv-img">
+	    				<a href="#"><img src="images/uploads/slider3.jpg" alt="" width="285" height="437"></a>
+	    			</div>
+	    			<div class="title-in">
+	    				<div class="cate">
+	    					<span class="blue"><a>Fantascienza</a></span>
+	    				</div>
+	    				<h6><a>Blade runner</a></h6>
+	    			</div>
+	    		</div>
+	    		<div class="movie-item">
+	    			<div class="mv-img">
+	    				<a href="#"><img src="images/uploads/slider4.jpg" alt="" width="285" height="437"></a>
+	    			</div>
+	    			<div class="title-in">
+	    				<div class="cate">
+	    					<span class="green"><a>Drammatico</a></span>
+	    				</div>
+	    				<h6><a>Mulholland drive</a></h6>
+	    			</div>
+	    		</div>
+
+	    	</div>
+	    </div>
+	</div>
+</div>
+<div class="page-single">
+	<div class="container">
+		<div class="row ipad-width">
+			<div class="col-md-8 col-sm-12 col-xs-12">
+				<div class="topbar-filter">
+					<p>Disponibili <span> 20 film</span> in totale</p>
+					<a href="" id="grid" class="grid"><i class="ion-grid"></i></a>
+				</div>
+				 <script>
+					document.getElementById( "grid" ).addEventListener( "click", function ( event ) {
+
+							event.preventDefault();
+							document.querySelectorAll( ".movie-item-style-2" ).forEach( div => {
+										div.style.display = "block";
+							});
+					});
+				 </script>
+				<div class="flex-wrap-movielist">
+						<div class="movie-item-style-2 movie-item-style-1 Oblivion">
+							<img src="images/uploads/Oblivion.jpg" alt="">
+							<div class="hvr-inner">
+	            				<a  class="noleggiaLink" id="rent-link1"> Noleggia film </a>
+	            			</div>
+							<div class="mv-item-infor">
+								<h6 id="film-title0"><a href="#">Oblivion</a></h6>
+								<p class="rate">
+									<span id="remainders-film0" ></span><span id="amount-film0" ></span>
+								</p>
+							</div>
+						</div>					
+						<div class="movie-item-style-2 movie-item-style-1 Nelle-terre-selvagge">
+							<img src="images/uploads/Nelle terre selvagge.jpg" alt="">
+							<div class="hvr-inner">
+	            				<a class="loginLink" id="rent-link1"> Noleggia film </a>
+	            			</div>
+
+							<div class="mv-item-infor">
+								<h6><a id="film-title1" href="#">Nelle terre selvagge</a></h6>
+								<p class="rate">
+									<span id="remainders-film1" ></span><h7 id="amount-film1" ></h7>
+								</p>
+							</div>
+						</div>
+						<div class="movie-item-style-2 movie-item-style-1 Die-hard">
+	            			<img src="images/uploads/Die hard.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title2"><a href="#">Die hard</a></h6>
+								<p class="rate">
+									<span id="remainders-film2" ></span><h7 id="amount-film2" ></h7>
+								</p>
+							</div>
+	            		</div>
+						<div class="movie-item-style-2 movie-item-style-1 The-walk">
+	            			<img src="images/uploads/The walk.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title3"><a href="#">The walk</a></h6>
+								<p class="rate">
+									<span id="remainders-film3" ></span><h7 id="amount-film3" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 Blade-runner">
+							<img src="images/uploads/Blade runner.jpg" alt="">
+							<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+							<div class="mv-item-infor">
+								<h6 id="film-title4"><a href="#">Blade runner</a></h6>
+								<p class="rate">
+									<span id="remainders-film4" ></span><h7 id="amount-film4" ></h7>
+								</p>
+							</div>
+						</div>
+						<div class="movie-item-style-2 movie-item-style-1 Mulholland-drive">
+							<img src="images/uploads/Mullholland drive.jpg" alt="">
+							<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+							<div class="mv-item-infor">
+								<h6 id="film-title5"><a href="#">Mullholland drive</a></h6>
+								<p class="rate">
+									<span id="remainders-film5" ></span><h7 id="amount-film5" ></h7>
+								</p>
+							</div>
+						</div>
+						<div class="movie-item-style-2 movie-item-style-1 Skyfall">
+							<img src="images/uploads/Skyfall.jpg" alt="">
+							<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+							<div class="mv-item-infor">
+								<h6 id="film-title6"><a href="#">Skyfall</a></h6>
+								<p class="rate">
+									<span id="remainders-film6" ></span><h7 id="amount-film6" ></h7>
+								</p>
+							</div>
+						</div>
+						<div class="movie-item-style-2 movie-item-style-1 Interstellar">
+	            			<img src="images/uploads/Interstellar.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title7"><a href="#">Interstellar</a></h6>
+								<p class="rate">
+									<span id="remainders-film7" ></span><h7 id="amount-film7" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 The-revenant">
+	            			<img src="images/uploads/The revenant.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title8"><a href="#">The revenant</a></h6>
+								<p class="rate">
+									<span id="remainders-film8" ></span><h7 id="amount-film8" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 Harry-Potter">
+	            			<img src="images/uploads/Harry Potter.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title9"><a href="#">Harry Potter</a></h6>
+								<p class="rate">
+									<span id="remainders-film9" ></span><h7 id="amount-film9" ></h7>
+								</p>
+							</div>
+	            		</div>
+						<div class="movie-item-style-2 movie-item-style-1 Guardiani-della-galassia">
+	            			<img src="images/uploads/Guardiani della galassia.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title10"><a href="#">Guardiani della galassia</a></h6>
+								<p class="rate">
+									<span id="remainders-film10" ></span><h7 id="amount-film10" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 Il-padrino">
+	            			<img src="images/uploads/Il padrino.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title11"><a href="#">Il padrino</a></h6>
+								<p class="rate">
+									<span id="remainders-film11" ></span><h7 id="amount-film11" ></h7>
+								</p>
+							</div>
+	            		</div>
+						<div class="movie-item-style-2 movie-item-style-1 Blue-velvet">
+	            			<img src="images/uploads/Velluto blu.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title12"><a href="#">Velluto blu</a></h6>
+								<p class="rate">
+									<span id="remainders-film12" ></span><h7 id="amount-film12" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 Gravity">
+	            			<img src="images/uploads/Gravity.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title13"><a href="#">Gravity</a></h6>
+								<p class="rate">
+									<span id="remainders-film13" ></span><h7 id="amount-film13" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 Southpaw">
+	            			<img src="images/uploads/Southpaw.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title14"><a href="#">Southpaw</a></h6>
+								<p class="rate">
+									<span id="remainders-film14" ></span><h7 id="amount-film14" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 Jurassic-park">
+	            			<img src="images/uploads/Jurassic Park.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title15"><a href="#">Jurassic Park</a></h6>
+								<p class="rate">
+									<span id="remainders-film15" ></span><h7 id="amount-film15" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 The-forest">
+	            			<img src="images/uploads/The forest.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title16"><a href="#">The forest</a></h6>
+								<p class="rate">
+									<span id="remainders-film16" ></span><h7 id="amount-film16" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 Spectre">
+	            			<img src="images/uploads/Spectre.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title17"><a href="#">Spectre</a></h6>
+								<p class="rate">
+									<span id="remainders-film17" ></span><h7 id="amount-film17" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 Strager-things">
+	            			<img src="images/uploads/Stranger things.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-button"> Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title18"><a href="#">Stranger things</a></h6>
+								<p class="rate">
+									<span id="remainders-film18" ></span><h7 id="amount-film18" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<div class="movie-item-style-2 movie-item-style-1 La-la-land">
+	            			<img src="images/uploads/La la land.jpg" alt="">
+	            			<div class="hvr-inner">
+	            				<a class="noleggiaLink" id="rent-link" > Noleggia film </a>
+	            			</div>
+	            			<div class="mv-item-infor">
+								<h6 id="film-title19"><a href="#">La la land</a></h6>
+								<p class="rate">
+									<span id="remainders-film19" ></span><h7 id="amount-film19" ></h7>
+								</p>
+							</div>
+	            		</div>
+	            		<!--<script>
+							document.getElementById( "rent-link" ).addEventListener( "click", function () {
+								let filmname = document.getElementById( "film-title" );
+							});
+	            		</script>-->
+				</div>
+
+
+			</div>
+			<div class="col-md-4 col-sm-12 col-xs-12">
+				<div class="sidebar">
+					<div class="searh-form">
+						<h4 class="sb-title">Cerca film per nome</h4>
+						<form class="form-style-1" action="#">
+							<div class="row">
+								<div class="col-md-12 form-it">
+									<label>Nome Film</label>
+									<input id="search-input" type="text" placeholder="Inserici nome">
+								</div>
+								<div class="col-md-12 form-it">
+									<label>Genere</label>
+									<div class="group-ip">
+										<select
+											name="skills" multiple="" class="ui fluid dropdown">
+											<option value="">Inserisci genere</option>
+											<option value="Action1">Avventura</option>
+					                        <option value="Action2">Azione</option>
+					                        <option value="Action3">Drammatico</option>
+					                        <option value="Action4">Fantascienza</option>
+										</select>
+									</div>
+
+								</div>
+								<div class="col-md-12 ">
+									<input id="search-button" class="submit" type="submit" value="Cerca">
+								</div>
+							</div>
+						</form>
+					</div>
+
+					<script>
+							document.getElementById( "search-button" ).addEventListener( "click", function ( event ) {
+
+										event.preventDefault();
+										let textbox = document.getElementById( "search-input" ).value;
+										textbox = textbox.replace( /\s+/g, '-' );
+
+										//const tuttiIDiv = document.querySelectorAll(".movie-item-style-2");
+
+										document.querySelectorAll( ".movie-item-style-2" ).forEach(div => {
+												div.style.display = "none";
+										});
+
+										document.querySelectorAll( "." + textbox ).forEach(div => {
+												div.style.display = "block";
+										});
+							});
+					</script>
+
+					<div class="ads">
+						<img src="images/uploads/ads1.png" alt="">
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- footer section-->
+<footer class="ht-footer">
+	<div class="container">
+		<div class="flex-parent-ft">
+			<div class="flex-child-ft item1">
+				 <a href="index.html"><img class="logo" src="images/logo1.png" alt=""></a>
+				 <p>5th Avenue st, manhattan<br>
+				New York, NY 10001</p>
+				<p>Call us: <a href="#">(+01) 202 342 6789</a></p>
+			</div>
+			<div class="flex-child-ft item2">
+				<h4>Resources</h4>
+				<ul>
+					<li><a href="#">About</a></li>
+					<li><a href="#">Blockbuster</a></li>
+					<li><a href="#">Contact Us</a></li>
+					<li><a href="#">Forums</a></li>
+					<li><a href="#">Blog</a></li>
+					<li><a href="#">Help Center</a></li>
+				</ul>
+			</div>
+			<div class="flex-child-ft item3">
+				<h4>Legal</h4>
+				<ul>
+					<li><a href="#">Terms of Use</a></li>
+					<li><a href="#">Privacy Policy</a></li>
+					<li><a href="#">Security</a></li>
+				</ul>
+			</div>
+			<div class="flex-child-ft item4">
+				<h4>Account</h4>
+				<ul>
+					<li><a href="#">My Account</a></li>
+					<li><a href="#">Watchlist</a></li>
+					<li><a href="#">Collections</a></li>
+					<li><a href="#">User Guide</a></li>
+				</ul>
+			</div>
+			<div class="flex-child-ft item5">
+				<h4>Newsletter</h4>
+				<p>Subscribe to our newsletter system now <br> to get latest news from us.</p>
+				<a href="#" class="btn">Subscribe now <i class="ion-ios-arrow-forward"></i></a>
+			</div>
+		</div>
+	</div>
+	<div class="ft-copyright">
+		<div class="ft-left">
+			<p><a target="_blank" href="https://www.templateshub.net">Templates Hub</a></p>
+		</div>
+		<div class="backtotop">
+			<p><a href="#" id="back-to-top">Back to top  <i class="ion-ios-arrow-thin-up"></i></a></p>
+		</div>
+	</div>
+</footer>
+<!-- end of footer section-->
+
+<script src="js/jquery.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/plugins2.js"></script>
+<script src="js/custom.js"></script>
+</body>
+
+<!-- moviegrid07:38-->
+</html>
