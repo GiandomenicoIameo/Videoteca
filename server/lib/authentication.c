@@ -7,7 +7,7 @@
 
 int authentication( int sdb, int action, char *body ) {
 
-    int result = 0;
+    int result = AUTHENTICATION;
 
     // Se il seguente test, espresso dal costrutto if ( connected( sdb ) ),
     // non fallisce allora si tratterà sicuramente di un client che sta
@@ -19,11 +19,9 @@ int authentication( int sdb, int action, char *body ) {
             switch( action ) {
                     case SIGNIN:
                             signin( sdb, body );
-                            rentable();
                             break;
                     case SIGNUP:
                             signup( sdb, body );
-                            rentable();
                             break;
                     default:
                             return -1;
@@ -63,7 +61,7 @@ void signin( int sdb, char *body ) {
                       "script/authentication/signin/verify.sh %d", recuid( sdb ) );
 
             if ( WEXITSTATUS( system( command ) ) ) {
-                    strcpy( body, "Connesso!\n****Date di restituzione scadute!!****" );
+                    strcpy( body, "****Date di restituzione scadute!!****" );
             } else {
                     strcpy( body, "Connesso!" );
             }

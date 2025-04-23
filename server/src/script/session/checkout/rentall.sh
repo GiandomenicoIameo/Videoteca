@@ -2,6 +2,8 @@
 
 uid=$1
 
-while IFS=":" read filmname eamount ramount date; do
-	script/session/rental/rent.sh "$filmname" $eamount
-done < database/cart$uid
+if [[ -e database/cart$uid ]]; then
+	while IFS=":" read filmname eamount total date; do
+		script/session/rental/rent.sh "$filmname" $eamount
+	done < database/cart$uid
+fi

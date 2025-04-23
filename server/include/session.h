@@ -19,3 +19,4 @@ void showrented( int uid, char *body );
 void returntest( int uid, char *body );
 
 void checkout( int uid, char *body );
+void checklim( int uid, char *body );

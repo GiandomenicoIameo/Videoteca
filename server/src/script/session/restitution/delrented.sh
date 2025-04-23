@@ -4,7 +4,7 @@ uid=$1; filmname=$2
 num=$3; time=$4
 
 while IFS=":" read name number current date; do
-    if [[ $filmname == $name ]] && [[ $time = $date ]]; then
+    if [[ $filmname == $name ]] && [[ $time == $date ]]; then
         (( diff = number - num ))
         if (( diff != 0 )); then
             sed -i s/"$name":$number:"$current":"$date"/"$name":$diff:"$current":"$date"/ database/rented$uid

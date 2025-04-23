@@ -2,7 +2,7 @@
 CC = gcc
 OPTIONS = -Wall -Wextra -pedantic -fstack-protector-strong -I ../include
 LIB = ../lib/authentication.c ../lib/session.c ../lib/release.c \
-      ../lib/search.c ../lib/metadata.c server-tcp.c
+      ../lib/view.c ../lib/metadata.c server-tcp.c
 OBJ = $(LIB:.c=.o)
 
 # Target principale

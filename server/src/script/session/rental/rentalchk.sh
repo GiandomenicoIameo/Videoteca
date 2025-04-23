@@ -3,10 +3,9 @@
 filmname=$1; number=$2
 date=$3
 
-while IFS=":" read film num rentable; do
-
+while IFS=":" read film num total; do
     if [[ $filmname == $film ]]; then
-        if (( $number >= 0 )) && (( $number <= $rentable )); then
+        if (( number >= 0 )) && (( number <= num )); then
             script/session/date.sh $date; exit $?
         else
             exit 2

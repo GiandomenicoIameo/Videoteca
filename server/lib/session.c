@@ -1,5 +1,5 @@
 #include "session.h"
-#include "search.h"
+#include "view.h"
 
 #include <string.h> // Qui è presente il prototipo della funzione strcpy
 #include <stdlib.h> // Qui è stata definita la funzione system()
@@ -24,35 +24,29 @@ int session( int sdb, int action, char *body ) {
     // abbia effettuato in un precedente momento la connessione
     // all'account.
 
-    int result = 1;
+    int result = SESSION;
 
     if ( !connected( sdb ) ) {
             strcpy( body, "Non sei connesso!" );
     } else {
             switch( action ) {
-                    case 0: // Richiesta di noleggio.
-                            rentest( recuid( sdb ), body );
-                            rentable();
-                            break;
                     case 1: // Richiesta di aggiunta al carrello.
                             setout( recuid( sdb ), body );
                             // preadd( recuid( sdb ), body );
                             break;
-                 // case 2: Richiesta di rimozione dal carrello.
-                 //        predel( recuid( sdb ), body );
-                 //        break;
                     case 2: // Richiesta di restituzione.
                             returntest( recuid( sdb ), body );
-                            rentable();
+                            //rentable();
                             break;
                     case 3: // Richiesta di checkout.
                             checkout( recuid( sdb ), body );
-                            rentable();
+                            //rentable();
                             break;
-                    case 4:
+                    case 4: // richiesta di visualizzazione contenuto carrello.
                             showcart( recuid( sdb ), body );
                             break;
-                    case 5: showrented( recuid( sdb ), body );
+                    case 5: // richiesta di visualizzazione film noleggiati.
+                            showrented( recuid( sdb ), body );
                             break;
                     default:
                             result = -1;
@@ -157,7 +151,7 @@ void setout( int uid, char *body ) {
     switch( rentalchk( filmname, eamount, date ) ) {
             case 0:
                     setup( uid, filmname, atoi( eamount ), date );
-                    strcpy( body, "Articolo/i impostato" );
+                    strcpy( body, "Articolo/i aggiornati" );
                     break;
             case 1:
                     strcpy( body, "Data non valida!" );
@@ -186,93 +180,6 @@ void setup( int uid, char* filmname, int eamount, char *date ) {
                       uid, filmname, eamount, ramount, date );
     system( command );
 }
-
-/*
-void preadd( int uid, char *body ) {
-
-    void additem( int uid, char *filmname, int eamount, char *date );
-
-    char filmname[ 40 ], eamount[ 5 ],
-             date[ 20 ];
-
-    takeout( body, filmname, eamount, date );
-
-    switch( rentalchk( filmname, eamount, date ) ) {
-            case 0:
-                    additem( uid, filmname, atoi( eamount ), date );
-                    strcpy( body, "Articolo/i aggiunto al carrello" );
-                    break;
-            case 1:
-                    strcpy( body, "Data non valida!" );
-                    break;
-            case 2:
-                    strcpy( body, "Quantità non noleggiabile!" );
-                    break;
-            case 3:
-                    strcpy( body, "Film non trovato!" );
-                    break;
-    }
-}
-
-void additem( int uid, char *filmname, int eamount, char *date ) {
-
-    char command[ 100 ];
-    unsigned int ramount;
-
-    snprintf( command, sizeof( command ), "script/search/ramount.sh \"%s\"",
-                      filmname );
-    // Processo lettore che accede al file movies.dat.
-    ramount = reader( command, mtm, wrtm, rdm );
-
-    snprintf( command, sizeof( command ),
-                      "script/session/addcart.sh %d \"%s\" %d %d \"%s\"",
-                      uid, filmname, eamount, ramount, date );
-    system( command );
-}*/
-
-/*
-void predel( int uid, char *body ) {
-
-    void delitem( int uid, char *filmname, int number );
-
-    unsigned int res;
-
-    char filmname[ 40 ], number[ 5 ],
-             date[ 20 ], command[ 100 ];
-
-    takeout( body, filmname, number, date );
-
-    snprintf( command, sizeof( command ),
-              "script/session/removechk.sh %d \"%s\" %d \"%s\"",
-              uid, filmname, atoi( number ), date );
-
-    res = reader( command, mtm, wrtm, rdm );
-
-    switch( res ) {
-            case 0:
-                    delitem( uid, filmname, atoi( number ) );
-                    strcpy( body, "Articolo/i rimosso dal carrello!" );
-                    break;
-            case 1:
-                    strcpy( body, "Valore inserito non valido!" );
-                    break;
-            case 2:
-                    strcpy( body, "La data non corrisponde!" );
-                    break;
-            case 3:
-                    strcpy( body, "Film non trovato!" );
-    }
-}
-
-void delitem( int uid, char *filmname, int number ) {
-
-    char command[ 100 ];
-
-    snprintf( command, sizeof( command ),
-              "script/session/fromcart.sh %d \"%s\" %d",
-              uid, filmname, number );
-     system( command );
-}*/
 
 void returntest( int uid, char *body ) {
 
@@ -322,25 +229,46 @@ void returned( int uid, char *filmname, int number, char *date ) {
     system( command );
 }
 
-void checkout( int uid, char *body ) {
+void checklim( int uid, char *body ) {
 
     void rentall( int uid );
-    char command[ 100 ];
 
+    char command[ 100 ];
+    unsigned int res;
+
+    snprintf( command, sizeof( command ),
+              "script/session/checkout/control1.sh %d", uid );
+    res = WEXITSTATUS( system( command ) );
+
+    if( res > 20 ) {
+            strcpy( body, "Limite massimo superato!" );
+    } else {
+            snprintf( command, sizeof( command ),
+                "script/session/checkout/control.sh %d %d", uid, res );
+            if( WEXITSTATUS( system( command ) ) ) {
+                    strcpy( body, "Limite massimo superato: 20" );
+            } else {
+                    strcpy( body, "Checkout riuscito!" );
+                    rentall( uid );
+            }
+    }
+}
+
+void checkout( int uid, char *body ) {
+
+    char command[ 100 ];
     snprintf( command, sizeof( command ),
               "script/session/checkout/checkout.sh %d", uid );
 
     switch( WEXITSTATUS( system( command ) ) ) {
             case 0:
-                   strcpy( body, "Checkout riuscito!" );
-                   rentall( uid );
+                   checklim( uid, body );
                    break;
             case 1:
-                   strcpy( body, "Checkout fallito!\nControllare il numero di copie che si desidera noleggiare!\n" );
+                   strcpy( body, "Controllare il numero di copie che si desidera noleggiare!" );
                    break;
             case 2:
-                   strcpy( body, "Checkout fallito!\nContrallare le date di prestito!\n" );
-                   break;
+                   strcpy( body, "Contrallare le date di prestito!" );
     }
 }
 

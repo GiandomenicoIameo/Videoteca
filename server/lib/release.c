@@ -11,7 +11,7 @@ int release( int sdb, int action, char *body ) {
     // nel corpo della funzione release perché è l'unica funzione che
     // invoca cancel() e signout()
 
-    int result = 2;
+    int result = RELEASE;
 
     if ( !connected( sdb ) ) {
             strcpy( body, "Non sei connesso!" );
@@ -19,11 +19,9 @@ int release( int sdb, int action, char *body ) {
             switch( action ) {
                     case LOGOUT:
                             signout( sdb, body );
-                            rentable();
                     break;
                     case CANCEL:
                             cancel( sdb, body );
-                            rentable();
                     break;
                     default:
                             result = -1;
@@ -62,16 +60,21 @@ void cancel( int sdb, char *body ) {
     // l'accesso a quest'ultimo.id = system( command );
 
     extern semaphore wrts;
-
     char command[ 100 ];
 
     snprintf( command, sizeof( command ),
-              "script/release/cancel/cancel.sh %d", sdb );
-    // Processo scrittore che accede al file signed.dat.
-    writer( command, wrts );
+        "script/release/cancel/removecart.sh %d", recuid( sdb ) );
+    system( command );
 
     snprintf( command, sizeof( command ),
-              "script/release/cancel/removecart.sh %d", recuid( sdb ) );
+             "script/session/restitution/returnall.sh %d", recuid( sdb ) );
     system( command );
+
+    snprintf( command, sizeof( command ),
+        "script/release/cancel/cancel.sh %d", sdb );
+    // Processo scrittore che accede al file signed.dat.
+    writer( command, wrts );
+    rentable();
+
     strcpy( body, "Account cancellato!" );
 }

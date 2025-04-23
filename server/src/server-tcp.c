@@ -1,7 +1,7 @@
 #include "authentication.h"
 #include "session.h"
 #include "release.h"
-#include "search.h"
+#include "view.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -156,7 +156,7 @@ void *runner( void *sda ) {
                     if ( connected( sdb ) ) {
                             snprintf( command, sizeof( command ),
                                 "sed -ri 's/(.*:)%d/\\10/' database/signed.dat", sdb );
-                            // Processo scrittore che accede al file connessi.dat.
+                            // Processo scrittore che accede al file signed.dat.
                             writer( command, wrts );
                     }
                     break;
@@ -173,10 +173,6 @@ void *runner( void *sda ) {
 
         result = request( sdb, buffer, &type, &action, &body );
         response( result, body, &sdb );
-
-        if ( result == RELEASE ) {
-                break;
-        }
     }
 
     close( sdb );
@@ -192,6 +188,7 @@ int request( int sdb, char *buffer, int *type, int *action, char **body ) {
     printf( "Tipo di richiesta: %d%d\n", *type, *action );
 
     switch( *type ) {
+            // Messaggi di richiesta
             case AUTHENTICATION:
                     result = authentication( sdb, *action, *body );
                     break;
@@ -201,8 +198,8 @@ int request( int sdb, char *buffer, int *type, int *action, char **body ) {
             case RELEASE:
                     result = release( sdb, *action, *body );
                     break;
-            case SEARCH:
-                    search( *body );
+            case VIEW:
+                    showmovies( *body );
                     result = 3;
                     break;
             default:

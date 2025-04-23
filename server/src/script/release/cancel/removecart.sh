@@ -1,8 +1,9 @@
 #!/bin/bash
 
-id=$1
+uid=$1
 
-if [[ -e database/cart$id ]]; then
-    rm database/cart$id
+if [[ -e database/cart$uid ]]; then
+    rm database/cart$uid
+    rm database/cart$uid.gz
 fi
 

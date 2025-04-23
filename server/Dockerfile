@@ -1,5 +1,6 @@
 FROM gcc:latest
 
+RUN apt update && apt install -y bsdmainutils
 # Utilizzando il seguente comando, viene creata la directory 
 # di lavoro denominata app, che è una sottodirectory della 
 # directory root (/) nel file system del container.
@@ -14,4 +15,6 @@ WORKDIR /app/src
 # Compilazione del programma server-tcp.c e
 # creazione dell'eseguibile
 RUN make
-WORKDIR /app
+
+WORKDIR /app/src
+CMD [ "./server-tcp.out" ]
