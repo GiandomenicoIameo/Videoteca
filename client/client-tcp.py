@@ -108,7 +108,6 @@ class WebApp:
         self.client.send( message.encode() )
         response = self.client.recv( 1024 )
 
-        #print( response.decode() )
         return response.decode()
 
     def showcart( self, head ):
@@ -122,7 +121,6 @@ class WebApp:
 
         try:
             decompressed_data = gzip.decompress( compressed_data )
-            #print( decompressed_data.decode( 'utf-8' ) )
             return decompressed_data.decode( 'utf-8' )
         except Exception as e:
             print( f"Errore durante la decompressione: {e}" )
@@ -139,7 +137,6 @@ class WebApp:
 
         try:
             decompressed_data = gzip.decompress( compressed_data )
-            #print( decompressed_data.decode( 'utf-8' ) )
             return decompressed_data.decode( 'utf-8' )
         except Exception as e:
             print( f"Errore durante la decompressione: {e}" )
@@ -174,7 +171,6 @@ class WebApp:
 
         try:
             decompressed_data = gzip.decompress( compressed_data )
-            #print( decompressed_data.decode( 'utf-8' ) )
             return decompressed_data.decode( 'utf-8' )
         except Exception as e:
                 print( f"Errore durante la decompressione: {e}" )
