@@ -32,15 +32,12 @@ int session( int sdb, int action, char *body ) {
             switch( action ) {
                     case 1: // Richiesta di aggiunta al carrello.
                             setout( recuid( sdb ), body );
-                            // preadd( recuid( sdb ), body );
                             break;
                     case 2: // Richiesta di restituzione.
                             returntest( recuid( sdb ), body );
-                            //rentable();
                             break;
                     case 3: // Richiesta di checkout.
                             checkout( recuid( sdb ), body );
-                            //rentable();
                             break;
                     case 4: // richiesta di visualizzazione contenuto carrello.
                             showcart( recuid( sdb ), body );
