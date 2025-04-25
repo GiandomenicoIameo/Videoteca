@@ -14,6 +14,11 @@ WORKDIR /app
 # directory di lavoro del container: /app
 COPY . /app
 
+# Dal momento che nel container viene eseguita un'applicazione che crea
+# socket a tempo di esecuzione, essa si aspetta che la variabile
+# XDG_RUNTIME_DIR sia impostata per determinare dove mettere i file
+# di runtime come le socket UNIX.
+ENV XDG_RUNTIME_DIR=/tmp/runtime-root
 RUN pip install --root-user-action=ignore --upgrade pip
 
 # Il seguente comando consente di installare le dipendenze 
