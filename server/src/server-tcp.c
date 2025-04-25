@@ -46,7 +46,7 @@ int main( void ) {
     pthread_t tid;
 
     // La creazione di una socket richiede di specificare tre
-    // paramentri: dominio, tipo di comunicazione ( orientata alla connession oppure
+    // paramentri: dominio, tipo di comunicazione ( orientata alla connessione oppure
     // non orientata alla conessione ) e protocollo del livello di trasporto.
     listener = socket( AF_INET, SOCK_STREAM, 0 );
     // La socker creata è riferita dal descrittore di file listener.
