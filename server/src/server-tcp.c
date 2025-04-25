@@ -45,25 +45,39 @@ int main( void ) {
     int address, listener, sda;
     pthread_t tid;
 
+    // La creazione di una socket richiede di specificare tre
+    // paramentri: dominio, tipo di comunicazione ( orientata alla connession oppure
+    // non orientata alla conessione ) e protocollo del livello di trasporto.
     listener = socket( AF_INET, SOCK_STREAM, 0 );
+    // La socker creata è riferita dal descrittore di file listener.
 
     if( listener < 0 ) {
             perror( "creazione della socket fallita" );
             exit( EXIT_FAILURE );
     }
 
+    // Le strutture destinate a memorizzare, rispettivamente, l'indirizzo della socket
+    // del server e della socket del client vengono azzerate.
     memset( &server, 0, sizeof( server ) );
     memset( &client, 0, sizeof( client ) );
 
+    // Definizione dell'indirizzo della socket.
     server.domain = AF_INET;
-    server.port = htons( 8080 );
-    server.ip = htonl( INADDR_ANY );
+    server.port   = htons( 8080 );
+    server.ip     = htonl( INADDR_ANY );
 
+    // La socket viene legata all'indirizzo definito nelle tre istruzioni precedenti.
     if ( bind( listener, ( const struct sockaddr * )&server , sizeof( server ) ) < 0 ) {
             perror( "Errore ricevuto dalla primitiva bind" );
             exit( EXIT_FAILURE );
     }
 
+    // Qui avviene quella fase denominata: Wait-for-connection e viene
+    // effettuata dalle funzioni listen() e accecpt().
+
+    // Il parametro backlog che in questo caso è pari a 3 specifica che
+    // il sistema operativo è in grado di mantenere fino a 3 connessioni nella
+    // coda di attesa prima che venga rifiutata una nuova connessione.
     if ( listen( listener, 3 ) < 0 ) {
             perror( "Errore ricevuto dalla primitiva listen" );
             exit( EXIT_FAILURE );
@@ -83,7 +97,15 @@ int main( void ) {
             // il thread figlio ha eseguito signal( &lock ): dopo che ha
             // duplicato il descrittore di file sda.
 
+
+            // La funzione accept() estrae la prima richiesta di connessione e blocca
+            // l'esecuzione del programma. La richiesta viene prelevata dalla coda delle
+            // richieste di connessioni pendenti.
+            // Una volta che la connessione è stata accettata, viene creata una nuova socket,
+            // riferita dal descrittore sda, dedicata alla connessione con il client specifico.
             if( ( sda = accept( listener,
+            // client sarebbe la struttura che contiene l'indirizzo della socket del client. Tale
+            // struttura qui viene riempita con l'indirizzo della socket del client.
                                 ( struct sockaddr * )&client,
                                 ( socklen_t *)&address ) ) < 0 ) {
                     perror( "Errore ricevuto dalla primitiva accept" );
