@@ -7,10 +7,6 @@
 
 int release( int sdb, int action, char *body ) {
 
-    // I prototipi per le funzioni cancel() e signout() sono inclusi
-    // nel corpo della funzione release perché è l'unica funzione che
-    // invoca cancel() e signout()
-
     int result = RELEASE;
 
     if ( !connected( sdb ) ) {
@@ -74,7 +70,5 @@ void cancel( int sdb, char *body ) {
         "script/release/cancel/cancel.sh %d", sdb );
     // Processo scrittore che accede al file signed.dat.
     writer( command, wrts );
-    rentable();
-
     strcpy( body, "Account cancellato!" );
 }
