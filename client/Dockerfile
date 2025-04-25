@@ -14,7 +14,6 @@ WORKDIR /app
 # directory di lavoro del container: /app
 COPY . /app
 
-ENV XDG_RUNTIME_DIR=/tmp/runtime-root
 RUN pip install --root-user-action=ignore --upgrade pip
 
 # Il seguente comando consente di installare le dipendenze 
