@@ -34,11 +34,16 @@ class WebApp:
         self.client.send( message.encode() )
         response = self.client.recv( 1024 )
 
+        if not response:
+            print( "Server disconnesso!" )
+            self.quit()
+
+        result = response.decode().split( '\n' )
         if data[ 'action' ] == 0:
-            res = self.signin( response.decode() )
+            res = self.signin( result[ 1 ] )
 
         elif data[ 'action' ] == 1:
-            res = self.signup( response.decode() )
+            res = self.signup( result[ 1 ] )
 
         return res
 
@@ -78,7 +83,6 @@ class WebApp:
         elif data[ 'action' ] == 5:
             return self.showrented( head )
 
-
     def toCart( self, head, data ):
 
         message = (head + data[ 'filmname' ] + '\0'
@@ -88,7 +92,12 @@ class WebApp:
         self.client.send( message.encode() )
         response = self.client.recv( 1024 )
 
-        return response.decode()
+        if not response:
+            print( "Server disconnesso!" )
+            self.quit()
+
+        result = response.decode().split( '\n' )
+        return result[ 1 ]
 
     def returnMovie( self, head, data ):
 
@@ -99,7 +108,12 @@ class WebApp:
         self.client.send( message.encode() )
         response = self.client.recv( 1024 )
 
-        return response.decode()
+        if not response:
+            print( "Server disconnesso!" )
+            self.quit()
+
+        result = response.decode().split( '\n' )
+        return result[ 1 ]
 
     def checkout( self, head ):
 
@@ -108,7 +122,12 @@ class WebApp:
         self.client.send( message.encode() )
         response = self.client.recv( 1024 )
 
-        return response.decode()
+        if not response:
+            print( "Server disconnesso!" )
+            self.quit()
+
+        result = response.decode().split( '\n' )
+        return result[ 1 ]
 
     def showcart( self, head ):
 
@@ -117,14 +136,18 @@ class WebApp:
         self.client.send( message.encode() )
         response = self.client.recv( 1024 )
 
-        compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
+        if not response:
+            print( "Server disconnesso!" )
+            self.quit()
+
+        result = response.decode( 'utf-8' ).split( '\n' )
+        compressed_data = bytes.fromhex( result[ 1 ] )
 
         try:
             decompressed_data = gzip.decompress( compressed_data )
             return decompressed_data.decode( 'utf-8' )
         except Exception as e:
             print( f"Errore durante la decompressione: {e}" )
-
 
     def showrented( self, head ):
 
@@ -133,7 +156,12 @@ class WebApp:
         self.client.send( message.encode() )
         response = self.client.recv( 1024 )
 
-        compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
+        if not response:
+            print( "Server disconnesso!" )
+            self.quit()
+
+        result = response.decode( 'utf-8' ).split( '\n' )
+        compressed_data = bytes.fromhex( result[ 1 ] )
 
         try:
             decompressed_data = gzip.decompress( compressed_data )
@@ -167,7 +195,12 @@ class WebApp:
         self.client.send( message.encode() )
         response = self.client.recv( 1024 )
 
-        compressed_data = bytes.fromhex( response.decode( 'utf-8' ) )
+        if not response:
+            print( "Server disconnesso!" )
+            self.quit()
+
+        result = response.decode( 'utf-8' ).split( '\n' )
+        compressed_data = bytes.fromhex( result[ 1 ] )
 
         try:
             decompressed_data = gzip.decompress( compressed_data )
@@ -204,7 +237,6 @@ if __name__ == "__main__":
 
     signal.signal( signal.SIGINT, handler )
     signal.signal( signal.SIGTERM, handler )
-
-    app = WebApp( '172.17.0.2', 8080, 'index.html' )
+    # 172.17.0.2
+    app = WebApp( 'localhost', 8080, 'index.html' )
     app.start_gui()
-
