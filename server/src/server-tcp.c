@@ -27,7 +27,9 @@
 
 // Variabile condivisa che assume la funzione di lucchetto
 // per l'accesso alla risorsa condivisa sda ( descrittore di file ).
+
 int lock = 1;
+pthread_attr_t attributes;
 
 void *runner( void *sda );
 void wait( int *lock );
@@ -43,6 +45,7 @@ int main( void ) {
 
     struct sockaddr_in client, server;
     int address, listener, sda;
+
     pthread_t tid;
 
     // La creazione di una socket richiede di specificare tre
@@ -61,14 +64,22 @@ int main( void ) {
     memset( &server, 0, sizeof( server ) );
     memset( &client, 0, sizeof( client ) );
 
-    // Definizione dell'indirizzo della socket.
+    // Le successive tre istruzioni definiscono l'indirizzo della socket.
     server.domain = AF_INET;
+    // Prima di trasmettere i dati sulla rete, l'indirizzo IP e la porta
+    // devono essere convertiti. Il server deve convertire sia l'indirizzo IP che
+    // il numero di porta dal formato interno della macchina al formato di rete standard.
+    // La rappresentazione dei dati contenuti delle intestazioni dei pacchetti di rete
+    // è big-endian.
+
+    // htons trasforma un intero senza segno di 16 bit nel formato standard di rete.
+    // htonl trasforma un intero senza segno di 32 bit nel formato standard di rete.
     server.port   = htons( 8080 );
     server.ip     = htonl( INADDR_ANY );
 
     // La socket viene legata all'indirizzo definito nelle tre istruzioni precedenti.
     if ( bind( listener, ( const struct sockaddr * )&server , sizeof( server ) ) < 0 ) {
-            perror( "Errore ricevuto dalla primitiva bind" );
+            perror( "Errore ricevuto dalla primitiva bind()" );
             exit( EXIT_FAILURE );
     }
 
@@ -79,7 +90,7 @@ int main( void ) {
     // il sistema operativo è in grado di mantenere fino a 3 connessioni nella
     // coda di attesa prima che venga rifiutata una nuova connessione.
     if ( listen( listener, 3 ) < 0 ) {
-            perror( "Errore ricevuto dalla primitiva listen" );
+            perror( "Errore ricevuto dalla primitiva listen()" );
             exit( EXIT_FAILURE );
     }
 
@@ -89,32 +100,48 @@ int main( void ) {
             signal( SIGTERM, handler );
 
             puts( "Server in ascolto sulla porta 8080..." );
-            address = sizeof( client );
-
-            wait( &lock );
 
             // Il thread padre esegue la primitiva accept solo dopo che il
             // il thread figlio ha eseguito signal( &lock ): dopo che ha
             // duplicato il descrittore di file sda.
 
+            wait( &lock );
 
             // La funzione accept() estrae la prima richiesta di connessione e blocca
             // l'esecuzione del programma. La richiesta viene prelevata dalla coda delle
             // richieste di connessioni pendenti.
             // Una volta che la connessione è stata accettata, viene creata una nuova socket,
             // riferita dal descrittore sda, dedicata alla connessione con il client specifico.
+            address = sizeof( client );
             if( ( sda = accept( listener,
             // client sarebbe la struttura che contiene l'indirizzo della socket del client. Tale
             // struttura qui viene riempita con l'indirizzo della socket del client.
                                 ( struct sockaddr * )&client,
                                 ( socklen_t *)&address ) ) < 0 ) {
-                    perror( "Errore ricevuto dalla primitiva accept" );
+                    perror( "Errore ricevuto dalla primitiva accept()" );
                     exit( EXIT_FAILURE );
             }
-            pthread_create( &tid, NULL, runner, &sda );
-    }
 
-    return 0;
+            // Prima della creazione del thread figlio, il thread principale chiama pthread_attr_setdetachehstate()
+            // per configurare gli attributi di thread figlio in modo che venga creato in uno specifico stato, ovvero
+            // in stato distaccato. Ciò significa che il thread principale non è più
+            // responsabile della gestione del thread creato. Questo diventa indipendente e
+            // quando termina, le sue risorse vengono automaticamente liberate dal sistema.
+            // Al thread principale non interessa il valore di ritorno dei thread figli.
+
+            if ( pthread_attr_setdetachstate( &attributes, PTHREAD_CREATE_DETACHED ) ) {
+                    perror( "pthread_attr_setdetachstate()" ); exit( EXIT_FAILURE );
+            } pthread_create( &tid, &attributes, runner, &sda );
+
+            // La precedente chiamata crea un nuovo thread. Oltre all'ID del
+            // thread e ai suoi attributi, viene passato il nome della funzione da cui il
+            // nuovo thread inizierà l'esecuzione, in questo caso runner(), e l'indirizzo
+            // della variabile che contiene il descrittore.
+
+            // Qui non bisogna liberare la struttura di attributi del thread. Non è possibile
+            // sapere in anticipo quanti thread verranno creati quindi non è sicuro liberarla se
+            // poi nuovi thread si riferiranno ad essa.
+    }
 }
 
 void handler( int sign ) {
@@ -124,10 +151,15 @@ void handler( int sign ) {
 
     snprintf( command, sizeof( command ),
               "sed -ri 's/(.*:).*/\\10/' database/signed.dat" );
+
+    // oppure anche sed -ri 's/(.*:)./\\10/' database/signed.dat" );
     // Processo scrittore che accede al file signed.dat.
     writer( command, wrts );
-
     puts( "\nConnessione terminata!" );
+
+    // La struttura pthread_attr_t viene distrutta (o liberata) poiché non
+    // è più necessaria.
+    pthread_attr_destroy( &attributes );
     exit( EXIT_SUCCESS );
 
     // Il processo principale termina normalmente e ogni thread creato
@@ -153,7 +185,7 @@ void *runner( void *sda ) {
     post( &lock );
 
     // Il thread figlio sblocca il lucchetto e permette al thread
-    // padre di utilizzare sda per la creazione di una nuova socket
+    // padre di utilizzare sda per la creazione di una nuova socket.
 
     char *body = NULL, buffer[ 1024 ], command[ 100 ];
     int result, type, action, res;
@@ -163,43 +195,46 @@ void *runner( void *sda ) {
     while( 1 ) {
             res = read( sdb, buffer, sizeof( buffer ) - 1 );
 
-            if( res < 0 ) {
-                    perror( "Errore ricevuto dalla primitiva read" );
-                    pthread_exit( ( void * )1 );
-            } else if( res == 0 ) {
-                    // QUando viene restituito un valore uguale a 0 significa EOF
-                    // ( end-of-file ) ovvero indica che il punto terminale posto
-                    // all'altro estremo della connessione ha voluto chiudere la
-                    // connessione e quindi il file descriptor non potrà più
-                    // essere utilizzato per leggere dati.
+            if( res <= 0 ) {
+                    if ( res < 0 ) {
+                            perror( "Errore ricevuto dalla primitiva read" );
+                    } else {
+                           // Quando viene restituito un valore uguale a 0 significa EOF
+                           // ( end-of-file ) ovvero indica che il punto terminale posto
+                           // all'altro estremo della connessione ha voluto chiudere la
+                           // connessione e quindi il file descriptor non potrà più
+                           // essere utilizzato per leggere dati.
 
-                    // Se l'utente era loggato prima di chiudere la connessione,
-                    // viene disconnesso.
-                    if ( connected( sdb ) ) {
-                            snprintf( command, sizeof( command ),
-                                "sed -ri 's/(.*:)%d/\\10/' database/signed.dat", sdb );
-                            // Processo scrittore che accede al file signed.dat.
-                            writer( command, wrts );
-                    }
-                    break;
-        }
-        // L'istruzione di assegnazione seguente è fondamentale
-        // per le funzioni split() ed extract() in quanto consente
-        // loro di capire il punto finale del corpo del messaggio.
-        buffer[ res ] = '\0';
-        printf( "Client: %d\n", sdb );
+                           // Se l'utente era loggato prima di chiudere la connessione,
+                           // viene disconnesso.
+                           if ( connected( sdb ) ) {
+                                   snprintf( command, sizeof( command ),
+                                          "sed -ri 's/(.*:)%d/\\10/' database/signed.dat", sdb );
+                                   // Processo scrittore che accede al file signed.dat.
+                                   writer( command, wrts );
+                            }
+                     }
+                     break;
+            }
 
-        // Le funzioni request() e response() usano il passaggio di parametri per riferimento
-        // per poter essere in grado di "restituire" più valori alla loro funzione
-        // chiamante modificando variabili nella funzione chiamante.
+            // La seguente istruzione di assegnazione è fondamentale
+            // per le funzioni split() ed extract() in quanto consente
+            // loro di capire il punto finale del corpo del messaggio.
+            buffer[ res ] = '\0';
+            printf( "Client: %d\n", sdb );
 
-        result = request( sdb, buffer, &type, &action, &body );
-        response( result, body, &sdb );
+            // Le funzioni request() e response() usano il passaggio di parametri per riferimento
+            // per poter essere in grado di "restituire" più valori alla loro funzione
+            // chiamante modificando variabili nella funzione chiamante stessa.
+
+            result = request( sdb, buffer, &type, &action, &body );
+            response( result, body, &sdb );
     }
 
     close( sdb );
     puts( "Connessione terminata" );
-    pthread_exit( 0 );
+
+    return NULL;
 }
 
 int request( int sdb, char *buffer, int *type, int *action, char **body ) {
@@ -237,15 +272,13 @@ void response( int result, char *body, int *sdb ) {
     // Il server non ha compreso la richiesta del client e, in risposta, invia
     // un codice corrispondende a tale evento.
     if ( result < 0 ) {
-            strcpy( message, "404 Bad Request" );
+            strcpy( message, "404 Bad Request:\n" );
     // Il server ha compreso e accettato con successo la richiesta del client
     // e, in risposta, invia una conferma dell'avvenuta comprensione.
     } else {
-            //strcpy( message, "200 OK:" );
+            strcpy( message, "200 OK:\n" );
     }
-    strcpy( message, body );
-    //strcat( message, body );
-    // assemble( message, type, action, body );
+    strcat( message, body );
     message[ strlen( message ) + 1 ] = '\0';
 
     if( write( *sdb, ( const char * )message, strlen( message ) ) < 0 ) {
@@ -256,6 +289,7 @@ void response( int result, char *body, int *sdb ) {
 
 char *split( char *buffer, int *type, int *action ) {
 
+    // Spacchetta il messaggio di richiesta.
     unsigned int code[ 2 ];
 
     for( int i = 0; isdigit( *buffer ); buffer++, i++ ) {
