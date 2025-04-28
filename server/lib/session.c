@@ -74,7 +74,7 @@ void takeout( char *body, char *filmname, char *number, char *date ) {
     }
 }
 
-// Messaggio di richiesta
+// Messaggio di richiestaz
 void setout( int uid, char *body ) {
 
     void setup( int uid, char* filmname, int eamount, char *date );
