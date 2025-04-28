@@ -1,7 +1,6 @@
 #!/bin/bash
 
-uid=$1
-tot=$2
+uid=$1; tot=$2
 
 if ! [[ -e database/rented$uid ]]; then
 	exit 0

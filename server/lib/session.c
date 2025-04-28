@@ -74,68 +74,7 @@ void takeout( char *body, char *filmname, char *number, char *date ) {
     }
 }
 
-unsigned int rentalchk( char *filmname, char *number, char *date ) {
-
-    char command[ 100 ];
-
-    snprintf( command, sizeof( command ),
-              "script/session/rental/rentalchk.sh \"%s\" %d \"%s\"",
-              filmname, atoi( number ), date );
-    // Processo lettore che accede al file movies.dat.
-    return reader( command, mtm, wrtm, rdm );
-}
-
-void rentest( int uid, char *body ) {
-
-    // Per il momento il noleggio è basato solo sulla data di restituizione,
-    // nome del film e quantità disponibile.
-
-    void rent( int uid, char *filmname, int number, char *date );
-
-    char filmname[ 40 ], number[ 5 ],
-             date[ 20 ];
-
-    takeout( body, filmname, number, date );
-
-    // Non esiste il caso default poiché si è certi che tutte le possibili
-    // opzioni siano già coperte dai vari case.
-    switch( rentalchk( filmname, number, date ) ) {
-            case 0:
-                    rent( uid, filmname, atoi( number ), date );
-                    strcpy( body, "Noleggio approvato!" );
-                    break;
-            case 1:
-                    strcpy( body, "Data non valida!" );
-                    break;
-            case 2:
-                    strcpy( body, "Quantità non noleggiabile!" );
-                    break;
-            case 3:
-                    strcpy( body, "Film non trovato!" );
-                    break;
-    }
-}
-
-void rent( int uid, char *filmname, int number, char *date ) {
-
-    void updatecart( int uid, char *filmname );
-
-    extern semaphore wrtm;
-    char command[ 100 ];
-
-    snprintf( command, sizeof( command ),
-              "script/session/rental/rent.sh \"%s\" %d",
-              filmname, number );
-    // Processo scrittore che accede al file movies.dat.
-    writer( command, wrtm );
-
-    snprintf( command, sizeof( command ),
-              "script/session/rental/addrent.sh %d \"%s\" %d \"%s\"",
-              uid, filmname, number, date );
-    system( command );
-    updatecart( uid, filmname );
-}
-
+// Messaggio di richiesta
 void setout( int uid, char *body ) {
 
     void setup( int uid, char* filmname, int eamount, char *date );
@@ -162,6 +101,17 @@ void setout( int uid, char *body ) {
     }
 }
 
+unsigned int rentalchk( char *filmname, char *number, char *date ) {
+
+    char command[ 100 ];
+
+    snprintf( command, sizeof( command ),
+              "script/session/rental/rentalchk.sh \"%s\" %d \"%s\"",
+              filmname, atoi( number ), date );
+    // Processo lettore che accede al file movies.dat.
+    return reader( command, mtm, wrtm, rdm );
+}
+
 void setup( int uid, char* filmname, int eamount, char *date ) {
 
     char command[ 100 ];
@@ -178,6 +128,7 @@ void setup( int uid, char* filmname, int eamount, char *date ) {
     system( command );
 }
 
+// Messaggio di richiesta
 void returntest( int uid, char *body ) {
 
     void returned( int uid, char *filmname, int number, char *date );
@@ -226,6 +177,41 @@ void returned( int uid, char *filmname, int number, char *date ) {
     system( command );
 }
 
+void updatecart( int uid, char *filmname ) {
+
+    char command[ 100 ];
+    unsigned int ramount;
+
+    snprintf( command, sizeof( command ),
+              "script/search/ramount.sh \"%s\"", filmname );
+    // Processo lettore che accede al file movies.dat.
+    ramount = reader( command, mtm, wrtm, rdm );
+
+    snprintf( command, sizeof( command ),
+              "script/session/setup/updatecart.sh %d \"%s\" %d",
+              uid, filmname, ramount );
+    system( command );
+}
+
+// Messaggio di richiesta
+void checkout( int uid, char *body ) {
+
+    char command[ 100 ];
+    snprintf( command, sizeof( command ),
+              "script/session/checkout/checkout.sh %d", uid );
+
+    switch( WEXITSTATUS( system( command ) ) ) {
+            case 0:
+                   checklim( uid, body );
+                   break;
+            case 1:
+                   strcpy( body, "Controllare il numero di copie che si desidera noleggiare!" );
+                   break;
+            case 2:
+                   strcpy( body, "Contrallare le date di prestito!" );
+    }
+}
+
 void checklim( int uid, char *body ) {
 
     void rentall( int uid );
@@ -251,24 +237,6 @@ void checklim( int uid, char *body ) {
     }
 }
 
-void checkout( int uid, char *body ) {
-
-    char command[ 100 ];
-    snprintf( command, sizeof( command ),
-              "script/session/checkout/checkout.sh %d", uid );
-
-    switch( WEXITSTATUS( system( command ) ) ) {
-            case 0:
-                   checklim( uid, body );
-                   break;
-            case 1:
-                   strcpy( body, "Controllare il numero di copie che si desidera noleggiare!" );
-                   break;
-            case 2:
-                   strcpy( body, "Contrallare le date di prestito!" );
-    }
-}
-
 void rentall( int uid ) {
 
     char command[ 100 ];
@@ -281,7 +249,8 @@ void rentall( int uid ) {
     system( command );
 }
 
-// chiamare la funzione review
+
+// Messaggio di richiesta
 void showcart( int uid, char *body ) {
 
     // Capire il significato delle seguenti istruzioni.
@@ -307,22 +276,7 @@ void showcart( int uid, char *body ) {
 	}
 }
 
-void updatecart( int uid, char *filmname ) {
-
-    char command[ 100 ];
-    unsigned int ramount;
-
-    snprintf( command, sizeof( command ),
-              "script/search/ramount.sh \"%s\"", filmname );
-    // Processo lettore che accede al file movies.dat.
-    ramount = reader( command, mtm, wrtm, rdm );
-
-    snprintf( command, sizeof( command ),
-              "script/session/setup/updatecart.sh %d \"%s\" %d",
-              uid, filmname, ramount );
-    system( command );
-}
-
+// Messaggio di richiesta
 void showrented( int uid, char *body ) {
 
     FILE *fpointer;
