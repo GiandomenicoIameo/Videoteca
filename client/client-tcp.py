@@ -177,8 +177,11 @@ class WebApp:
         message = head + ''
 
         self.client.send( message.encode() )
-        self.client.recv( 1024 ) # Questa istruzione è essenziale
-                                 # per svuotare il buffer.
+        response = self.client.recv( 1024 )  # Questa istruzione è essenziale
+                                             # per svuotare il buffer.
+        if not response:
+            print( "Server disconnesso!" )
+            self.quit()
 
         # Si assume che non ci siano stati errori durante il percorso, quindi
         # il client si disinteressa della risposta del server. Il client presume che l'account
