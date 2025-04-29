@@ -48,7 +48,7 @@
 						const contenitore = document.querySelector(".flex-wrap-movielist.grid-fav");
 
 						const colonne = riga.split(':');
-						const [titolo, remainders, amount, ritorno] = colonne;
+						const [titolo, remainders, ritorno] = colonne;
 
 						// Crea il nuovo div
 						const nuovoDiv = document.createElement("div");
@@ -61,7 +61,8 @@
 							<div class="mv-item-infor">
 							<h6><a href="#">${titolo}</a></h6>
 							<p class="rate">
-								<span class="remainders-film${index}"></span><h7>/${amount}</h7>
+								<span>Quantità: </span>
+								<span class="remainders-film${index}"></span><h7></h7>
 								<p class="rate">
 								<span>Rilascio: </span>
 								<h7>${ritorno}</h7>
