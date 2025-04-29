@@ -10,6 +10,7 @@
 
     void rentable( void );
     void writer( char *command, semaphore mutex );
+    unsigned char writer_ret( char *command, semaphore mutex );
     unsigned char reader( char *command, semaphore mutex,
                           semaphore write, unsigned int readers );
 

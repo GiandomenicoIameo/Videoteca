@@ -37,7 +37,8 @@ int session( int sdb, int action, char *body ) {
                             returntest( recuid( sdb ), body );
                             break;
                     case 3: // Richiesta di checkout.
-                            checkout( recuid( sdb ), body );
+                            atomic( wrtm, recuid( sdb ), body, checkout );
+                            //checkout( recuid( sdb ), body );
                             break;
                     case 4: // richiesta di visualizzazione contenuto carrello.
                             showcart( recuid( sdb ), body );
@@ -74,7 +75,7 @@ void takeout( char *body, char *filmname, char *number, char *date ) {
     }
 }
 
-// Messaggio di richiestaz
+// Messaggio di richiesta
 void setout( int uid, char *body ) {
 
     void setup( int uid, char* filmname, int eamount, char *date );
@@ -115,16 +116,9 @@ unsigned int rentalchk( char *filmname, char *number, char *date ) {
 void setup( int uid, char* filmname, int eamount, char *date ) {
 
     char command[ 100 ];
-    unsigned int ramount;
-
-    snprintf( command, sizeof( command ), "script/search/ramount.sh \"%s\"",
-                      filmname );
-    // Processo lettore che accede al file movies.dat.
-    ramount = reader( command, mtm, wrtm, rdm );
-
     snprintf( command, sizeof( command ),
-                      "script/session/setup/addcart.sh %d \"%s\" %d %d \"%s\"",
-                      uid, filmname, eamount, ramount, date );
+                      "script/session/setup/setcart.sh %d \"%s\" %d \"%s\"",
+                      uid, filmname, eamount, date );
     system( command );
 }
 
@@ -132,7 +126,6 @@ void setup( int uid, char* filmname, int eamount, char *date ) {
 void returntest( int uid, char *body ) {
 
     void returned( int uid, char *filmname, int number, char *date );
-    void updatecart( int uid, char *filmname );
 
     char filmname[ 40 ], number[ 5 ],
              date[ 20 ], command[ 1000 ];
@@ -146,7 +139,6 @@ void returntest( int uid, char *body ) {
     switch( WEXITSTATUS( system( command ) ) ) {
             case 0:
                     returned( uid, filmname, atoi( number ), date );
-                    updatecart( uid, filmname );
                     strcpy( body, "Restituzione approvata!" );
                     break;
             case 1:
@@ -177,22 +169,6 @@ void returned( int uid, char *filmname, int number, char *date ) {
     system( command );
 }
 
-void updatecart( int uid, char *filmname ) {
-
-    char command[ 100 ];
-    unsigned int ramount;
-
-    snprintf( command, sizeof( command ),
-              "script/search/ramount.sh \"%s\"", filmname );
-    // Processo lettore che accede al file movies.dat.
-    ramount = reader( command, mtm, wrtm, rdm );
-
-    snprintf( command, sizeof( command ),
-              "script/session/setup/updatecart.sh %d \"%s\" %d",
-              uid, filmname, ramount );
-    system( command );
-}
-
 // Messaggio di richiesta
 void checkout( int uid, char *body ) {
 
@@ -202,17 +178,17 @@ void checkout( int uid, char *body ) {
 
     switch( WEXITSTATUS( system( command ) ) ) {
             case 0:
-                   checklim( uid, body );
+                   checksum( uid, body );
                    break;
             case 1:
-                   strcpy( body, "Controllare il numero di copie che si desidera noleggiare!" );
+                   strcpy( body, "Quantità non disponibile!" );
                    break;
             case 2:
-                   strcpy( body, "Contrallare le date di prestito!" );
+                   strcpy( body, "Controllare le date di prestito!" );
     }
 }
 
-void checklim( int uid, char *body ) {
+void checksum( int uid, char *body ) {
 
     void rentall( int uid );
 
@@ -220,11 +196,11 @@ void checklim( int uid, char *body ) {
     unsigned int res;
 
     snprintf( command, sizeof( command ),
-              "script/session/checkout/control1.sh %d", uid );
+              "script/session/checkout/sumcopies.sh %d", uid );
     res = WEXITSTATUS( system( command ) );
 
     if( res > 20 ) {
-            strcpy( body, "Limite massimo superato!" );
+            strcpy( body, "Limite massimo superato: 20" );
     } else {
             snprintf( command, sizeof( command ),
                 "script/session/checkout/control.sh %d %d", uid, res );
@@ -242,13 +218,12 @@ void rentall( int uid ) {
     char command[ 100 ];
     snprintf( command, sizeof( command ), "script/session/checkout/rentall.sh %d",
              uid );
-    writer( command, wrtm );
+    system( command );
 
     snprintf( command, sizeof( command ), "script/session/checkout/up.sh %d",
              uid );
     system( command );
 }
-
 
 // Messaggio di richiesta
 void showcart( int uid, char *body ) {
@@ -299,4 +274,11 @@ void showrented( int uid, char *body ) {
 			pclose( fpointer );
 			strcpy( body, buffer );
 	}
+}
+
+void atomic( semaphore mutex, int uid, char *body, void ( *function )( int uid, char *body ) ) {
+
+    pthread_mutex_lock( &mutex );
+    ( *function )( uid, body ); /* sezione critica */
+    pthread_mutex_unlock( &mutex );
 }

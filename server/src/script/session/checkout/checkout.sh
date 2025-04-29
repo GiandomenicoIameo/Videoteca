@@ -18,19 +18,19 @@ declare -i row=0
 # file cart$uid
 
 IFS=":"
-read filmname eamount ramount date < database/cart$uid
+read filmname eamount date < database/cart$uid
 previous=$filmname
 
 (( row = row + 1 ))
 
-
-script/session/date.sh "$date"; var=$?
+script/search/ramount.sh "$filmname"; ramount=$?
 # Se la quantità che si desidera noleggiare è maggiore
 # del numero di copie totali si ottiene un errore
 if (( eamount > ramount )); then
 	exit 1
 fi
 
+script/session/date.sh "$date"; var=$?
 # Qui viene effettuato il controllo sulla data di rilascio
 # del film di nome $filmname
 if (( var == 1 )); then
@@ -40,13 +40,12 @@ fi
 (( sum = sum + eamount ))
 
 # Il file cart$uid viene ordinato in base al nome del film
-while IFS=":" read filmname eamount ramount date; do
-	script/session/date.sh "$date"; var=$?
-
+while IFS=":" read filmname eamount date; do
 	if (( row == 1 )); then
 		(( row = row + 1 ))
 		continue
 	fi
+	script/search/ramount.sh "$filmname"; ramount=$?
 	if [[ "$filmname" == "$previous" ]]; then
     # Qui vengono contate le quantità che si desidera noleggiare
     # relative al film di nome $filmname. Se la somma è maggiore della
@@ -63,7 +62,7 @@ while IFS=":" read filmname eamount ramount date; do
 			exit 1
 		fi
 	fi
-
+	script/session/date.sh "$date"; var=$?
 	if (( var == 1 )); then
 		exit 2
 	fi

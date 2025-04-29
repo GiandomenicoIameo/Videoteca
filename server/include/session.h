@@ -19,4 +19,6 @@ void showrented( int uid, char *body );
 void returntest( int uid, char *body );
 
 void checkout( int uid, char *body );
-void checklim( int uid, char *body );
+void checksum( int uid, char *body );
+
+void atomic( semaphore mutex, int uid, char *body, void ( *function )( int uid, char *body ) );

@@ -4,7 +4,6 @@ uid=$1; filmname=$2
 number=$3; date=$4
 current=$( date "+%Y-%m-%d" )
 
-
 if ! [[ -e database/rented$uid ]]; then
     touch database/rented$uid
     echo "$filmname":$number:"$current":"$date" >> database/rented$uid
