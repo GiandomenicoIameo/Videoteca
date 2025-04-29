@@ -2,11 +2,12 @@
 
 uid=$1
 
+declare -i count=0
+
 if ! [[ -e database/cart$uid ]]; then
-	exit 0
+	exit $count
 fi
 
-declare -i count=0
 while IFS=":" read filmname eamount date; do
 	(( count = count + eamount ))
 done < database/cart$uid

@@ -63,7 +63,7 @@ void cancel( int sdb, char *body ) {
     system( command );
 
     snprintf( command, sizeof( command ),
-             "script/session/restitution/returnall.sh %d", recuid( sdb ) );
+             "script/release/cancel/returnall.sh %d", recuid( sdb ) );
     system( command );
 
     snprintf( command, sizeof( command ),

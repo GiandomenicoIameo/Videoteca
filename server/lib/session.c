@@ -34,7 +34,7 @@ int session( int sdb, int action, char *body ) {
                             setout( recuid( sdb ), body );
                             break;
                     case 2: // Richiesta di restituzione.
-                            returntest( recuid( sdb ), body );
+                            checkret( recuid( sdb ), body );
                             break;
                     case 3: // Richiesta di checkout.
                             atomic( wrtm, recuid( sdb ), body, checkout );
@@ -123,7 +123,7 @@ void setup( int uid, char* filmname, int eamount, char *date ) {
 }
 
 // Messaggio di richiesta
-void returntest( int uid, char *body ) {
+void checkret( int uid, char *body ) {
 
     void returned( int uid, char *filmname, int number, char *date );
 
@@ -172,56 +172,35 @@ void returned( int uid, char *filmname, int number, char *date ) {
 // Messaggio di richiesta
 void checkout( int uid, char *body ) {
 
+    void rentall( int uid );
     char command[ 100 ];
+
     snprintf( command, sizeof( command ),
               "script/session/checkout/checkout.sh %d", uid );
 
     switch( WEXITSTATUS( system( command ) ) ) {
             case 0:
-                   checksum( uid, body );
+                   strcpy( body, "Checkout riuscito!" );
+                   rentall( uid );
                    break;
             case 1:
-                   strcpy( body, "Quantità non disponibile!" );
+                   strcpy( body, "Limite superato!" );
                    break;
             case 2:
-                   strcpy( body, "Controllare le date di prestito!" );
-    }
-}
-
-void checksum( int uid, char *body ) {
-
-    void rentall( int uid );
-
-    char command[ 100 ];
-    unsigned int res;
-
-    snprintf( command, sizeof( command ),
-              "script/session/checkout/sumcopies.sh %d", uid );
-    res = WEXITSTATUS( system( command ) );
-
-    if( res > 20 ) {
-            strcpy( body, "Limite massimo superato: 20" );
-    } else {
-            snprintf( command, sizeof( command ),
-                "script/session/checkout/control.sh %d %d", uid, res );
-            if( WEXITSTATUS( system( command ) ) ) {
-                    strcpy( body, "Limite massimo superato: 20" );
-            } else {
-                    strcpy( body, "Checkout riuscito!" );
-                    rentall( uid );
-            }
+                   strcpy( body, "Quantità non disponibile per alcuni film!" );
+                   break;
+            case 3:
+                   strcpy( body, "Alcune date sono inesatte!" );
+                   break;
     }
 }
 
 void rentall( int uid ) {
 
     char command[ 100 ];
-    snprintf( command, sizeof( command ), "script/session/checkout/rentall.sh %d",
-             uid );
-    system( command );
 
-    snprintf( command, sizeof( command ), "script/session/checkout/up.sh %d",
-             uid );
+    snprintf( command, sizeof( command ),
+              "script/session/checkout/rentall.sh %d", uid );
     system( command );
 }
 

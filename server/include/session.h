@@ -16,9 +16,9 @@ void rentest( int uid, char *body );
 void showcart( int uid, char *body );
 void showrented( int uid, char *body );
 
-void returntest( int uid, char *body );
+void checkret( int uid, char *body );
 
 void checkout( int uid, char *body );
-void checksum( int uid, char *body );
+//void checksum( int uid, char *body );
 
 void atomic( semaphore mutex, int uid, char *body, void ( *function )( int uid, char *body ) );
