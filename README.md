@@ -10,7 +10,7 @@ si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del ge
 Come prima cosa, quindi, è necessario installare il software docker. A tal fine, si rimanda alla guida ufficiale [guida per Debian](https://docs.docker.com/engine/install/debian/)*
 
 ## <p align=center>Creazione dell'ambiente di esecuzione </p>
-*Ora non ci resta che creare l'ambiente adatto per eseguire l'applicazione. Creeremo due ambienti virtuali, in cui il programma client e il programma server verranno eseguiti in modo isolato. Successivamente, questi programmi comunicheranno tramite la rete di comunicazione, sfruttando le porte e gli indirizzi dei container.*
+*Una volta completata l'installazione di docker non ci resta che creare l'ambiente adatto per eseguire l'applicazione. Creeremo due ambienti virtuali, in cui il programma client e il programma server verranno eseguiti in modo isolato. Successivamente, questi programmi comunicheranno tramite la rete di comunicazione, sfruttando le porte e gli indirizzi dei container.*
 
 *La creazione degli ambienti richiede dapprima la costruzione di particolari oggetti docker noti come ___immagini___. I Dockerfile, memorizzati rispettivamente nella directory ```client/``` e nella directory ```server/```, definiscono proprio come costruire queste immagini. La creazione è dettata dai seguenti comandi:*
 
