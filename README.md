@@ -7,7 +7,7 @@ si trovi su una distribuzione GNU/Linux completamente funzionante, dotata del ge
 ## <p align=center>Tecnologie utilizzate</p>
 ### Docker
 *Docker è la tecnologia di virtualizzazione impiegata per questa applicazione e si basa sul concetto di ___containerizzazione___. E' uno strumento che permette in modo estremamente facile la creazione, l'utilizzo e l'esecuzione di applicazioni utilizzando i container. In questo modo l'utente focalizza l'attenzione su questioni diverse dall'installazione e configurazione dell'applicazione. 
-Come prima cosa, quindi, è necessario installare il software docker. Basta digitare da terminale.*
+Come prima cosa, quindi, è necessario installare il software docker. A tal fine, si rimanda alla guida ufficiale [guida per Debian](https://docs.docker.com/engine/install/debian/)*
 
 ```bash
 $ sudo apt update && apt install docker
