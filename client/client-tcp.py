@@ -31,10 +31,10 @@ class WebApp:
         head = str( int( method ) ) + str( data[ 'action' ] )
         message = head + data[ 'username' ] + ' ' + data[ 'password' ]
 
-        self.client.send( message.encode() )
-        response = self.client.recv( 1024 )
-
-        if not response:
+        try:
+            self.client.send( message.encode() )
+            response = self.client.recv( 1024 )
+        except:
             print( "Server disconnesso!" )
             self.quit()
 
@@ -88,11 +88,10 @@ class WebApp:
         message = (head + data[ 'filmname' ] + '\0'
                        + data[ 'number' ] + '\0'
                        + data[ 'date' ] + '\0')
-
-        self.client.send( message.encode() )
-        response = self.client.recv( 1024 )
-
-        if not response:
+        try:
+            self.client.send( message.encode() )
+            response = self.client.recv( 1024 )
+        except:
             print( "Server disconnesso!" )
             self.quit()
 
@@ -104,11 +103,10 @@ class WebApp:
         message = (head + data[ 'filmname' ] + '\0'
                          + data[ 'number' ] + '\0'
                          + data[ 'date' ] + '\0')
-
-        self.client.send( message.encode() )
-        response = self.client.recv( 1024 )
-
-        if not response:
+        try:
+            self.client.send( message.encode() )
+            response = self.client.recv( 1024 )
+        except:
             print( "Server disconnesso!" )
             self.quit()
 
@@ -119,10 +117,10 @@ class WebApp:
 
         message = head + ''
 
-        self.client.send( message.encode() )
-        response = self.client.recv( 1024 )
-
-        if not response:
+        try:
+            self.client.send( message.encode() )
+            response = self.client.recv( 1024 )
+        except:
             print( "Server disconnesso!" )
             self.quit()
 
@@ -133,10 +131,10 @@ class WebApp:
 
         message = head + ''
 
-        self.client.send( message.encode() )
-        response = self.client.recv( 1024 )
-
-        if not response:
+        try:
+            self.client.send( message.encode() )
+            response = self.client.recv( 1024 )
+        except:
             print( "Server disconnesso!" )
             self.quit()
 
@@ -153,10 +151,10 @@ class WebApp:
 
         message = head + ''
 
-        self.client.send( message.encode() )
-        response = self.client.recv( 1024 )
-
-        if not response:
+        try:
+            self.client.send( message.encode() )
+            response = self.client.recv( 1024 )
+        except:
             print( "Server disconnesso!" )
             self.quit()
 
@@ -176,10 +174,12 @@ class WebApp:
         head = str( int( method ) ) + str( data )
         message = head + ''
 
-        self.client.send( message.encode() )
-        response = self.client.recv( 1024 )  # Questa istruzione è essenziale
-                                             # per svuotare il buffer.
-        if not response:
+        try:
+            self.client.send( message.encode() )
+            response = self.client.recv( 1024 )
+            # La precedente istruzione è essenziale
+            # per svuotare il buffer.
+        except:
             print( "Server disconnesso!" )
             self.quit()
 
@@ -195,10 +195,10 @@ class WebApp:
         head = str( int( method ) ) + str( int( action ) )
         message = head + ''
 
-        self.client.send( message.encode() )
-        response = self.client.recv( 1024 )
-
-        if not response:
+        try:
+            self.client.send( message.encode() )
+            response = self.client.recv( 1024 )
+        except:
             print( "Server disconnesso!" )
             self.quit()
 
@@ -216,7 +216,7 @@ class WebApp:
         webview.windows[ 0 ].destroy()
 
         self.client.close()
-        sys.exit()
+        sys.exit( 0 )
 
     def start_gui( self ):
 
@@ -241,5 +241,5 @@ if __name__ == "__main__":
     signal.signal( signal.SIGINT, handler )
     signal.signal( signal.SIGTERM, handler )
     # 172.17.0.2
-    app = WebApp( 'localhost', 8080, 'index.html' )
+    app = WebApp( '100.74.31.19', 8080, 'index.html' )
     app.start_gui()
