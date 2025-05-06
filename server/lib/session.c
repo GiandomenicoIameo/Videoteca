@@ -14,6 +14,14 @@ unsigned int rdm = 0; // lettori del file movies.dat.
 semaphore mtm = PTHREAD_MUTEX_INITIALIZER;
 // semaforo per assicurare la mutua esclusione per i processi scrittori
 // nel file movies.dat.
+
+// Il semaforo mtm viene inizializzato una sola volta a tempo di compilazione prima che il
+// programma viene eseguito evitando più chiamate esplicite a pthread_mutex_init, durante
+// l'esecuzione del programma, da parte di più thread. Se pthread_mutex_init viene
+// invocata più volta il comportamento non è definito dallo standard POSIX, però ciò
+// può portare a problemi di sincronizzazione o a crash del programma.
+
+
 semaphore wrtm = PTHREAD_MUTEX_INITIALIZER;
 // Il mutex viene inizializzato una sola volta dalla libreria POSIX.
 
@@ -222,7 +230,7 @@ void showcart( int uid, char *body ) {
 	fpointer = popen( command, "r" );
 	if ( fpointer == NULL ) {
 			perror( "Errore nell'esecuzione dello script" );
-            pthread_exit( ( void * )1 );
+            pthread_exit( NULL );
 	} else {
 			while ( fgets( buffer, sizeof( buffer ), fpointer ) != NULL );
 			pclose( fpointer );
@@ -246,7 +254,7 @@ void showrented( int uid, char *body ) {
 	fpointer = popen( command, "r" );
 	if ( fpointer == NULL ) {
 			perror( "Errore nell'esecuzione dello script" );
-            pthread_exit( ( void * )1 );
+            pthread_exit( NULL );
 	} else {
 			while ( fgets( buffer, sizeof( buffer ), fpointer ) != NULL );
 

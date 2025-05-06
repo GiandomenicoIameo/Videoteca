@@ -20,7 +20,7 @@ void showmovies( char *body ) {
 	fpointer = popen( command, "r" );
 	if ( fpointer == NULL ) {
 			perror( "Errore nell'esecuzione dello script" );
-            pthread_exit( ( void * )1 );
+            pthread_exit( NULL );
 	} else {
 			while ( fgets( buffer, sizeof( buffer ), fpointer ) != NULL );
 
