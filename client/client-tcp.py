@@ -5,6 +5,7 @@ import gzip
 import subprocess
 import signal
 import sys
+import time
 
 os.environ[ "QTWEBENGINE_CHROMIUM_FLAGS" ] = "--no-sandbox"
 
@@ -111,6 +112,7 @@ class WebApp:
             self.quit()
 
         result = response.decode().split( '\n' )
+        print( "Messaggio ricevuto: ")
         return result[ 1 ]
 
     def checkout( self, head ):
@@ -138,7 +140,7 @@ class WebApp:
             print( "Server disconnesso!" )
             self.quit()
 
-        result = response.decode( 'utf-8' ).split( '\n' )
+        result = response.decode().split( '\n' )
         compressed_data = bytes.fromhex( result[ 1 ] )
 
         try:
@@ -158,7 +160,7 @@ class WebApp:
             print( "Server disconnesso!" )
             self.quit()
 
-        result = response.decode( 'utf-8' ).split( '\n' )
+        result = response.decode().split( '\n' )
         compressed_data = bytes.fromhex( result[ 1 ] )
 
         try:
@@ -202,14 +204,14 @@ class WebApp:
             print( "Server disconnesso!" )
             self.quit()
 
-        result = response.decode( 'utf-8' ).split( '\n' )
+        result = response.decode().split( '\n' )
         compressed_data = bytes.fromhex( result[ 1 ] )
 
         try:
             decompressed_data = gzip.decompress( compressed_data )
             return decompressed_data.decode( 'utf-8' )
         except Exception as e:
-                print( f"Errore durante la decompressione: {e}" )
+            print( f"Errore durante la decompressione: {e}" )
 
     def quit( self ):
 
@@ -241,5 +243,6 @@ if __name__ == "__main__":
     signal.signal( signal.SIGINT, handler )
     signal.signal( signal.SIGTERM, handler )
     # 172.17.0.2
-    app = WebApp( '100.74.31.19', 8080, 'index.html' )
+    # 100.103.5.104
+    app = WebApp( '172.17.0.2', 8080, 'index.html' )
     app.start_gui()
