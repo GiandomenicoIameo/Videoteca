@@ -283,7 +283,7 @@ void response( int result, char *body, int *sdb ) {
 
     if( write( *sdb, ( const char * )message, strlen( message ) ) < 0 ) {
             perror( "Errore ricevuto dalla primitiva write" );
-            pthread_exit( ( void * )1 );
+            pthread_exit( NULL );
     }
 }
 
